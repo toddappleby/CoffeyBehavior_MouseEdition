@@ -1,0 +1,47 @@
+function checkSessionDates(mT, exD)
+uni_date = unique(exD.Date);
+uni_sub = unique(exD.TagNumber);
+for ud = 1:length(uni_date)
+    disp(['Date: ', num2str(uni_date(ud))])
+    exD_inds = find(exD.Date==uni_date(ud));
+    this_sess = exD.Session(exD_inds(1));
+    disp(['Session: ' num2str(this_sess)])
+    
+    % annoying solution to date variable format
+    charDate = num2str(uni_date(ud));
+    exD_year = charDate(1:2);
+    exD_month = charDate(3:4);
+    exD_day = charDate(5:6);
+    correctCount = 0;
+    dateFilesFound = 0;
+    for i = 1:height(mT)
+        this_file = mT.FileName{i};
+        [~, filename, ext] = fileparts(this_file);
+        this_file = strcat(filename, ext);
+        if contains(this_file, '!')
+            this_file = strsplit(this_file, '!');
+            this_file = this_file{2};
+        end
+        mT_year = this_file(3:4);
+        mT_month = this_file(6:7);
+        mT_day = this_file(9:10);
+        
+        if (strcmp(exD_year, mT_year) & ...
+            strcmp(exD_month, mT_month) & ...
+            strcmp(exD_day, mT_day))
+            dateFilesFound = dateFilesFound + 1; 
+
+            if ~(mT.Session(i) == this_sess)
+                disp(['Incorrect: ', mT.FileName{i}]);
+        
+            else
+                correctCount = correctCount + 1;
+            end
+        end
+    end
+    disp(['found ', num2str(dateFilesFound), ' of ' num2str(length(uni_sub)), ' expected files'])
+    disp(['# files with correct session: ', num2str(correctCount), ' of ', num2str(dateFilesFound)])
+    disp(' ')
+    disp(' ')
+    
+end
