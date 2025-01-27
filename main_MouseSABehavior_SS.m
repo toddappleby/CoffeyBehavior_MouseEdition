@@ -11,21 +11,25 @@
 % ----------------------------------------
 
 %% ------------- BEGIN CODE --------------
-% Import sheet paths
-main_folder = 'C:\Users\schle\Documents\Golden Local';
+% Import paths
+main_folder = 'C:\Users\schle\Documents\GitHub\CoffeyBehavior';
 cd(main_folder)
-beh_datapath = {'.\Behavior Data\R4 ER'}; % can add multiple data folders to cell array, data will be combined into one table
-masterSheet_flnm = 'Golden R01 Behavior Master Key.xlsx';
-BE_intake_canonical_flnm = '.\Import Sheets\2024.12.09.BE Intake Canonical.xlsx'; % only used if runtype == 'BE'
+addpath(genpath(main_folder))
+
+masterTable_flnm = '.\22-Jan-2025_masterTable.mat';
+beh_datapath = {'.\All Behavior'}; % can add multiple data folders to cell array, data will be combined into one table
+masterSheet_flnm = '.\Golden R01 Behavior Master Key.xlsx';
+BE_intake_canonical_flnm = '.\2024.12.09.BE Intake Canonical.xlsx'; % only used if runType == 'BE'
 
 % Misc. Settings
-runtype = 'ER'; % 'ER' (Extinction Reinstatement) or 'BE' (Behavioral Economics). SS note: add SA
+runNum = 4;
+runType = 'BE'; % 'ER' (Extinction Reinstatement), 'BE' (Behavioral Economics), 'SA' (Self Administration), 'E_BE_PR' (Extinction, Behavioral Economics, Progressive Ratio)
+createNewMasterTable = false; % reads mT in from masterTable_flnm if set to true, otherwise generates & saves a new one from beh_datapath
 firstHour = true; % separately run the first-hour of data (in addition to the full session)
 excludeData = true; % whether or not to exclude data (based on info in excludeData_flmn)
-% checkDateSessions = false; % [broken w/ new exclude-data system] date/session check only run if excludeData is also true (because it uses the excludeData sheet)
 
 %  Figure Options
-dailyData = false; % Should you run the daily figures
+dailyData = true; % Should you run the daily figures
 pubFigs = true; % Should you run the final publication figures
 indivIntake_figs = true; 
 groupIntake_figs = true; 
@@ -33,60 +37,45 @@ groupOralFentOutput_figs = true;
 
 % Save paths (these subfolders will be created in the "main_folder" if not
 % already present, with subfolders in each for each dataset run with this code
-dailyfigs_savepath = '.\Daily Figures\';
-pubfigs_savepath = '.\Publication Figures\';
-indivIntakefigs_savepath = '.\Individual Intake Figures\';
-groupIntakefigs_savepath = '.\Group Intake Figures\'; 
-groupOralFentOutput_savepath = '.\Combined Oral Fentanyl Output\';
-tabs_savepath = '.\Behavior Tables\';
-
-% Depricate
-% run_indiff=false; % run individual differences analysis
-% indifffigs_savepath = '.\Individual Differences Figures\';
+allfig_savefolder = 'C:\Users\schle\Documents\Golden Local\All Figures\';
+dailyfigs_savepath = 'Daily Figures\';
+pubfigs_savepath = 'Publication Figures\';
+indivIntakefigs_savepath = 'Individual Intake Figures\';
+groupIntakefigs_savepath ='Group Intake Figures\'; 
+groupOralFentOutput_savepath = 'Combined Oral Fentanyl Output\';
+tabs_savepath = 'Behavior Tables\';
 
 %% Initial housekeeping
-
-dt = date; % (datetime('today'))
+dt = char(datetime('today'));
 
 % Import Master Key
-addpath(genpath(main_folder))
 opts = detectImportOptions(masterSheet_flnm);
 opts = setvartype(opts,{'TagNumber','ID','Cage','Sex','Strain','TimeOfBehavior'},'categorical'); % Must be variables in the master key
 mKey=readtable('Golden R01 Behavior Master Key.xlsx',opts);
 
 % Create subdirectories
-% SS added this subfolder system to sort saved elements
 toMake = {tabs_savepath, dailyfigs_savepath, pubfigs_savepath, ...
           indivIntakefigs_savepath, groupIntakefigs_savepath, groupOralFentOutput_savepath};
-new_dirs = makeSubFolders(beh_datapath, toMake, excludeData, firstHour);
+new_dirs = makeSubFolders(allfig_savefolder, runNum, runType, toMake, excludeData, firstHour);
 sub_dir = new_dirs{1};
 if firstHour
     fH_sub_dir = new_dirs{2};
 end
 
+sessTypes = getSessTypes(runType); % returns empty if runType == 'all', won't be needed
+
+
 %% Import SA Data
-
-mT=table; % Initialize Master Table
-
-for bd = 1:length(beh_datapath) % SS edit to pull data from multiple folders
-    Files = dir(beh_datapath{bd});
-    Files = Files(1:height(Files));
-    startIdx = 1; % Current Wave Only
-    disp(['Pulling ', num2str(length(Files)), '...']) % height(Files)-i);
-    for i=startIdx:height(Files) % Loop all behavior files
-        if contains(Files(i).name, '_Subject') || contains(Files(i).name, '.Subject') % SS edit to avoid invalid filenames
-            % Import Data Geterated By MED-PC Code
-            [varTable, eventCode, eventTime] = importMouseOralSA(fullfile(Files(i).folder, Files(i).name));
-            % Calculate Variables Using Raw Data
-            [varTable] = rawVariableExtractor_SS(varTable, eventCode, eventTime);
-            % Concatonate the Master Table
-            mT=[mT; varTable];
-        end
-    end
+if createNewMasterTable
+    mT = createMasterTable(main_folder, beh_datapath, masterKey_flnm);
+else
+    load(masterTable_flnm)
 end
 
-% Join Master Variable Table with Key to Include Grouping Variables
-mT=innerjoin(mT,mKey,'Keys',{'TagNumber'},'RightVariables',{'Sex','Strain','TimeOfBehavior','Chamber'});
+%% PULL SPECIFIC RUN & EXPERIMENT TYPE TO CHECK
+mT_tags = getMTtags(runNum, runType, sessTypes, mKey);
+mT_ind = find(ismember(mT.TagNumber, mT_tags));
+mT = mT(mT_ind,:);
 
 %% EXCLUSIONS
 if excludeData
@@ -143,35 +132,35 @@ numtab = numFilesPerGroup(mT);
 
 if dailyData
     % Save daily copy of the master table in .mat and xlsx format and save groups stats  
-    mTname = [tabs_savepath, sub_dir, dt, '_MasterBehaviorTable.mat'];
+    mTname = [sub_dir, tabs_savepath, dt, '_MasterBehaviorTable.mat'];
     sub_mT = removevars(mT,{'eventCode', 'eventTime'});
-    writetable(sub_mT,[tabs_savepath, sub_dir dt, '_MasterBehaviorTable.xlsx'], 'Sheet', 1);
+    writetable(sub_mT,[sub_dir, tabs_savepath, dt, '_MasterBehaviorTable.xlsx'], 'Sheet', 1);
     groupStats = grpstats(mT,["Sex", "Strain", "Session"], ["mean", "sem"], ...
         "DataVars",["ActiveLever", "InactiveLever", "EarnedInfusions", "filteredHeadEntries", "Latency", "Intake"]);
-    writetable(groupStats, [tabs_savepath, sub_dir, dt, '_GroupStats.xlsx'], 'Sheet', 1);
+    writetable(groupStats, [sub_dir, tabs_savepath, dt, '_GroupStats.xlsx'], 'Sheet', 1);
     save(mTname,'mT');
     %Generate a set of figures to spotcheck data daily
-    dailySAFigures_SS(mT,dt,[dailyfigs_savepath, sub_dir]);
+    dailySAFigures_SS(mT,dt,[sub_dir, dailyfigs_savepath]);
     close all
     if firstHour
-        dailySAFigures_SS(hmT,dt,[dailyfigs_savepath, fH_sub_dir])
+        dailySAFigures_SS(hmT,dt,[fH_sub_dir, dailyfigs_savepath])
         close all
     end
 end
 
 %% Generate Clean Subset of Figures for Publication
 
-if pubFigs && strcmp(runtype, 'ER')
-    pubSAFigures_SS(mT, dt, [pubfigs_savepath, sub_dir]);
+if pubFigs && strcmp(runType, 'ER')
+    pubSAFigures_SS(mT, dt, [sub_dir, pubfigs_savepath]);
     if firstHour 
-        pubSAFigures_SS(hmT, dt, [pubfigs_savepath, fH_sub_dir]); 
+        pubSAFigures_SS(hmT, dt, [fH_sub_dir, pubfigs_savepath]); 
     end
     close all;
    
-elseif pubFigs && strcmp(runtype, 'BE')
-    pubSAFiguresBEAnimals_SS(mT, dt, [pubfigs_savepath, sub_dir]);
+elseif pubFigs && strcmp(runType, 'BE')
+    pubSAFiguresBEAnimals_SS(mT, dt, [sub_dir, pubfigs_savepath]);
     if firstHour
-        pubSAFiguresBEAnimals_SS(hmT, dt, [pubfigs_savepath, fH_sub_dir]); 
+        pubSAFiguresBEAnimals_SS(hmT, dt, [fH_sub_dir, pubfigs_savepath]); 
     end
     close all;
     
@@ -179,12 +168,12 @@ end
 
 %% ********** Behavioral Economics Analysis *************************************
 
-if strcmp(runtype, 'BE')
-    beT=mT; % Initialize Master Table
+if strcmp(runType, 'BE')
+    beT=mT(find(mT.sessionType=='BehavioralEconomics'),:); % Initialize Master Table
     
     % SS note: made Dose an array of nans instead of zeros to avoid divide-by-zeros errors
     Dose=nan([height(beT),1]);
-    Dose(beT.Session==51 | beT.Session==16)=222; % SS note: the right side of every or statement was "beT.Session==x,1" which seemed wrong, dropped the ',1'
+    Dose(beT.Session==51 | beT.Session==16)=222; 
     Dose(beT.Session==52 | beT.Session==17)=125;
     Dose(beT.Session==53 | beT.Session==18)=70; 
     Dose(beT.Session==54 | beT.Session==19)=40;
@@ -196,13 +185,16 @@ if strcmp(runtype, 'BE')
     % Import Measured Intake Data
     opts = detectImportOptions(BE_intake_canonical_flnm); 
     beiT=readtable(BE_intake_canonical_flnm, opts);
-    beiT.TagNumber=categorical(beiT.TagNumber); %% SS: redundant?
+    beiT.TagNumber=categorical(beiT.TagNumber);
     Day=beiT.Day;
     measuredIntake=beiT.measuredIntake;
-    beT=[beT; table(Day, measuredIntake)];
+    
+    TagNumber = unique(beT.TagNumber);
+    beiT_tag_inds = find(ismember(beiT.TagNumber, TagNumber));
+
+    beT= [beT, table(Day(beiT_tag_inds), measuredIntake(beiT_tag_inds))]; %, 'Keys',{'TagNumber'},'RightVariables',{'Day', 'measuredIntake'});
     
     % Curve Fit Each Animals Intake over Dose
-    TagNumber = unique(beT.TagNumber);
     aT=table(TagNumber,Acq);
     beT=innerjoin(beT,aT,'Keys',{'TagNumber'},'RightVariables',{'Acq'});
     IDs=unique(beT.TagNumber);
@@ -273,7 +265,7 @@ if strcmp(runtype, 'BE')
     set(g(1,1).facet_axes_handles,'Xtick',log2([4.5 8 14.3 25 45.5]),'XTickLabel',{'220','125','70','40','10'});
     set(g(2,1).facet_axes_handles,'Xtick',log2([4.5 8 14.3 25 45.5]),'XTickLabel',{'220','125','70','40','10'});
     
-    exportgraphics(f,[figs_savepath, sub_dir, 'c57BE_1.png']);
+    exportgraphics(f,[sub_dir, 'c57BE_1.png']);
     
     f=figure('Position',[100 100 350 500],'Color',[1 1 1]);
     clear g
@@ -406,7 +398,7 @@ for i=1:height(mTDL)
         f=figure('Position',[100 100 400 800]);
     
         g.draw;
-        exportgraphics(f,fullfile([indivIntakefigs_savepath, sub_dir, ...
+        exportgraphics(f,fullfile([sub_dir, indivIntakefigs_savepath, ...
                        'Tag', num2str(double(mTDL.TagNumber(i))), ...
                        '_Session', num2str(double(mTDL.Session(i))), ...
                        '_estBrainFent.pdf']),'ContentType','vector');
@@ -431,7 +423,7 @@ if indivIntake_figs
             g.facet_axes_handles(i).Title.FontSize=12;
             set(g.facet_axes_handles(i),'XTick',[0 90 180]);
         end
-        exportgraphics(f,[indivIntakefigs_savepath, sub_dir, 'Tag', char(IDs(j)), '_All_Session_Infusions.png']);
+        exportgraphics(f,[sub_dir, indivIntakefigs_savepath, 'Tag', char(IDs(j)), '_All_Session_Infusions.png']);
         close(f)
     end
         
@@ -450,7 +442,7 @@ if indivIntake_figs
             g.facet_axes_handles(i).Title.FontSize=12;
             set(g.facet_axes_handles(i),'XTick',[0 90 180]);
         end
-        exportgraphics(f, [indivIntakefigs_savepath, sub_dir, 'Tag', char(IDs(j)), 'All_Session_Drug_Level.png']);
+        exportgraphics(f, [sub_dir, indivIntakefigs_savepath, 'Tag', char(IDs(j)), 'All_Session_Drug_Level.png']);
         close(f)
     end
 end
@@ -470,7 +462,7 @@ if groupIntake_figs
     for i=1:length(g.facet_axes_handles)
         g.facet_axes_handles(i).YLim=[0 500];
     end
-    exportgraphics(f, [groupIntakefigs_savepath, sub_dir,'Drug Level Grouped Sex and Strain.png']);
+    exportgraphics(f, [sub_dir, groupIntakefigs_savepath, 'Drug Level Grouped Sex and Strain.png']);
     close(f)
 
     % Drug Level by Sex during Training
@@ -488,7 +480,7 @@ if groupIntake_figs
         g.facet_axes_handles(i).Title.FontSize=12;
         g.facet_axes_handles(i).YLim=[0 300];
     end
-    exportgraphics(f,[groupIntakefigs_savepath, sub_dir,'Drug Level Grouped Sex.pdf'],'ContentType','vector');
+    exportgraphics(f,[sub_dir,groupIntakefigs_savepath, 'Drug Level Grouped Sex.pdf'],'ContentType','vector');
     close(f)
 
     % Drug Level by Sex and Session during Training Sessions 5, 10, 15
@@ -504,7 +496,7 @@ if groupIntake_figs
     f=figure('Position',[100 100 450 400]);
     g.draw;
     set(g.facet_axes_handles,'YTick', 0:50:200, 'XTick', [0 90 180]);
-    exportgraphics(f,[groupIntakefigs_savepath, sub_dir,'Mean Drug Level Grouped by Sex and Session 5 10 15.pdf'],'ContentType','vector');
+    exportgraphics(f,[sub_dir, groupIntakefigs_savepath, 'Mean Drug Level Grouped by Sex and Session 5 10 15.pdf'],'ContentType','vector');
     close(f)
 
     % Cumulative responses (rewarded head entries) by Sex and Session during Training Sessions 5, 10, 15
@@ -521,14 +513,12 @@ if groupIntake_figs
     f=figure('Position',[100 100 450 400]);
     g.draw;
     set(g.facet_axes_handles, 'YTick', 0:50:300, 'XTick', [0 90 180]);
-    exportgraphics(f,[groupIntakefigs_savepath, sub_dir,'Mean Responses Grouped by Sex and Session 5 10 15.pdf'],'ContentType','vector');
+    exportgraphics(f,[sub_dir, groupIntakefigs_savepath, 'Mean Responses Grouped by Sex and Session 5 10 15.pdf'],'ContentType','vector');
     close(f)
 
 end
 
 %% Statistic Linear Mixed Effects Models
-load(['.\Behavior Tables\', sub_dir, dt, '_MasterBehaviorTable.mat']); % SS note: what var is this? 
-% SS note: commented out errors, come back to it. 
 % Training
 IntakeTrainLME = fitlme(mT(mT.sessionType=='Training',:),'Intake ~ Sex*Session + (1|ID)');
 InfusionsTrainLME = fitlme(mT(mT.sessionType=='Training',:),'Infusions ~ Sex*Session + (1|ID)');
@@ -678,7 +668,7 @@ if groupOralFentOutput_figs
     set(gca,'LineWidth',1.5,'TickDir','out')
     % SS commented out bc I don't hav corrplotKC.m
     % [corrs,~,h2] = corrplotKC(ivZT,DataVariables=prednames,Type="Spearman",TestR="on");
-    exportgraphics(f,[groupOralFentOutput_savepath, sub_dir, 'Individual Differences_Correlations.pdf'],'ContentType','vector');
+    exportgraphics(f,[sub_dir, groupOralFentOutput_savepath, 'Individual Differences_Correlations.pdf'],'ContentType','vector');
     close(f)
 end
 
@@ -698,7 +688,7 @@ yVars = {'Intake', 'Seeking', 'Association', 'Escalation', 'Extinction', 'Relaps
 yLabs = {' Fentanyl Intake (mg/kg)', 'Seeking (Head Entries)', 'Association (Latency)', ...
          'Escalation (slope Training Intake)', 'Extinction Responses', 'Relapse (Reinstatement Responses)', 'Severity' };
 f = plotViolins(ivT, yVars, yLabs);
-exportgraphics(f,[groupOralFentOutput_savepath, sub_dir, 'Individual Differences_Violin.pdf'],'ContentType','vector');
+exportgraphics(f,[sub_dir, groupOralFentOutput_savepath, 'Individual Differences_Violin.pdf'],'ContentType','vector');
 close(f)
 
 %% TSNE
@@ -752,7 +742,7 @@ grid off
 xlabel('');
 ylabel('');
 zlabel('');
-exportgraphics(f1,[groupOralFentOutput_savepath, sub_dir, 'Individual Differences PCA Vectors.pdf'],'ContentType','vector');
+exportgraphics(f1,[sub_dir, groupOralFentOutput_savepath, 'Individual Differences PCA Vectors.pdf'],'ContentType','vector');
 
 % SS uncommented, don't have the CaptureFigVid function and am not needing
 % this with code currently uncommented...
@@ -773,7 +763,7 @@ g.draw;
 for i=1:height(g.results.geom_point_handle)
    g.results.geom_point_handle(i).MarkerEdgeColor = [0 0 0];
 end
-exportgraphics(f1,[groupOralFentOutput_savepath, sub_dir, 'Individual Differences TSNE.pdf'],'ContentType','vector');
+exportgraphics(f1,[sub_dir, groupOralFentOutput_savepath, 'Individual Differences TSNE.pdf'],'ContentType','vector');
 
 
 %% BE Battery & Hot Plate
@@ -1135,20 +1125,12 @@ function [f] = plotViolins(ivT, yVars, yLabs)
 end
 
 
-function [new_dirs] = makeSubFolders(beh_datapath, toMake, excludeData, firstHour)
-    % SS added
-    for bd = 1:length(beh_datapath)
-        split = strsplit(beh_datapath{bd}, '\');
-        sub_dir = [split{length(split)}];
-        if bd < length(beh_datapath)
-            sub_dir = [sub_dir, '_']; 
-        else
-            if excludeData
-                sub_dir = [sub_dir, '_exclusions'];
-            end
-            sub_dir = [sub_dir, '\'];
-        end
+function [new_dirs] = makeSubFolders(allfig_savefolder, runNum, runType, toMake, excludeData, firstHour)
+    sub_dir = ['Run_', num2str(runNum), '_', runType];
+    if excludeData
+        sub_dir = [sub_dir, '_exclusions'];
     end
+    sub_dir = [allfig_savefolder, sub_dir, '\'];
 
     new_dirs = {sub_dir};
     if firstHour
@@ -1157,9 +1139,9 @@ function [new_dirs] = makeSubFolders(beh_datapath, toMake, excludeData, firstHou
     end
     
     for tm = 1:length(toMake)
-        mkdir([toMake{tm}, sub_dir])
+        mkdir([sub_dir, toMake{tm}])
         if firstHour
-            mkdir([toMake{tm}, fH_sub_dir])
+            mkdir([fH_sub_dir, toMake{tm}])
         end
     end
 end
@@ -1183,4 +1165,50 @@ function [mT] = removeExcludedData(mT, mKey)
     end
     mT(find(RemoveSession),:) = [];
     % mT=[mT table(RemoveSession)];
+end
+
+
+function sessTypes = getSessTypes(runType) % returns empty if runType == 'all', won't be needed
+    % EXPERIMENT TYPE DEFINITIONS FOR LOGICAL INDEXING
+    ER_types = {'SelfAdministration', 'Extinction', 'Reinstatement'};
+    BE_types = {'SelfAdministration', 'BehavioralEconomics'};
+    SA_types = {'SelfAdministration'};
+    E_BE_PR_types = {'SelfAdministration', 'Extinction', 'ProgressiveRatio', 'BehavioralEconomics'};
+    
+    % determine session types to use for logical indexing
+    % (only if runType ~= 'all')
+    sessTypes = {};
+    if strcmp(runType, 'ER')
+        sessTypes = ER_types;
+    end
+    if strcmp(runType, 'BE')
+        sessTypes = BE_types;
+    end
+    if strcmp(runType, 'SA')
+        sessTypes = SA_types; 
+    end
+    if strcmp(runType, 'E_BE_PR')
+        sessTypes = E_BE_PR_types;
+    end
+end
+
+
+function [mT_tags] = getMTtags(runNum, runType, sessTypes, mKey)
+
+    % indexing of data to include in checks
+    if runNum ~= -1
+        runInd = mKey.Run == runNum;
+    else
+        runInd = ones([length(mKey.Run), 1]); 
+    end
+    if ~strcmp(runType, 'all')
+        expInd = ones([length(runInd), 1]);
+        for typ = 1:length(sessTypes)
+            expInd = expInd .* mKey.(sessTypes{typ});
+        end
+    else
+        expInd = ones([length(mKey.Run), 1]);
+    end
+    mT_tags = mKey.TagNumber(find(runInd .* expInd));
+    
 end
