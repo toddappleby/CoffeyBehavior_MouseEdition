@@ -397,54 +397,54 @@ end
 
 %% Grouped intake-across-session figures
 if groupIntake_figs
-    % % Drug Level by Strain and Sex 
-    % g=gramm('x',mDrugLT.DLTime,'y',mDrugLT.DL,'color',mDrugLT.Strain,'lightness',mDrugLT.Sex); %,'subset',mDrugLT.Strain=='CD1');
-    % g.set_color_options('hue_range',[50 542.5],'chroma',80,'lightness',60,'n_color',2);
-    % g.facet_wrap(mDrugLT.Session,'scale','independent','ncols',3,'force_ticks',1,'column_labels',1);
-    % g.stat_summary('geom','area','setylim',1);
-    % g.axe_property('LineWidth',1.5,'FontSize',10,'XLim',[0 180],'tickdir','out');
-    % g.set_names('x',' Time (m)','y','Estimated Brain Fentanyl (pMOL)','column','Session');
-    % f = figure('units','normalized','outerposition',[0 0 .5 1]);
-    % g.draw;
-    % for i=1:length(g.facet_axes_handles)
-    %     g.facet_axes_handles(i).YLim=[0 500];
-    % end
-    % exportgraphics(f, [sub_dir, groupIntakefigs_savepath, 'Drug Level Grouped Sex and Strain.png']);
-    % close(f)
-    % 
-    % % Drug Level by Sex during Training
-    % g=gramm('x',mDrugLT.DLTime,'y',mDrugLT.DL,'color',mDrugLT.Sex,'subset',mDrugLT.sessionType=='Training');
-    % g.set_color_options('hue_range',[50 542.5],'chroma',80,'lightness',60,'n_color',2);
-    % g.facet_wrap(mDrugLT.Session,'scale','independent','ncols',5,'force_ticks',1,'column_labels',0);
-    % g.stat_summary('geom','area','setylim',1);
-    % g.axe_property('LineWidth',1.5,'FontSize',13,'XLim',[0 180],'tickdir','out');
-    % g.set_names('x',' Time (m)','y','Brain DL (pMOL)');
-    % g.set_title('Average Drug Level (Training)');
-    % f=figure('Position',[100 100 1200 800]);
-    % g.draw;
-    % for i=1:length(g.facet_axes_handles)
-    %     g.facet_axes_handles(i).Title.String=['Day ' num2str(i)];
-    %     g.facet_axes_handles(i).Title.FontSize=12;
-    %     g.facet_axes_handles(i).YLim=[0 300];
-    % end
-    % exportgraphics(f,[sub_dir,groupIntakefigs_savepath, 'Drug Level Grouped Sex.pdf'],'ContentType','vector');
-    % close(f)
-    % 
-    % % Drug Level by Sex and Session during Training Sessions 5, 10, 15
-    % g=gramm('x',mDrugLT.DLTime,'y',mDrugLT.DL,'color',mDrugLT.Sex,'lightness',mDrugLT.Session,'subset',(mDrugLT.Session==5 | mDrugLT.Session==10 | mDrugLT.Session==15));
-    % %g=gramm('x',mDrugLT.DLTime,'y',mDrugLT.DL*1000);
-    % g.set_color_options('hue_range',[50 542.5],'chroma',80,'lightness',60,'n_color',2);
-    % g.stat_summary('geom','line','setylim',1);
-    % g.set_text_options('font','Helvetica','base_size',12,'legend_scaling',.75,'legend_title_scaling',.75);
-    % g.axe_property('LineWidth',1.5,'XLim',[0 180],'YLim',[0 200],'tickdir','out');
-    % g.set_names('x',' Time (m)','y','Estimated Brain Fentanyl');
-    % g.set_title('Average Drug Level (Training days 1, 5, and 10)');
-    % % g.no_legend();
-    % f=figure('Position',[100 100 450 400]);
-    % g.draw;
-    % set(g.facet_axes_handles,'YTick', 0:50:200, 'XTick', [0 90 180]);
-    % exportgraphics(f,[sub_dir, groupIntakefigs_savepath, 'Mean Drug Level Grouped by Sex and Session 5 10 15.pdf'],'ContentType','vector');
-    % close(f)
+    % Drug Level by Strain and Sex 
+    g=gramm('x',mDrugLT.DLTime,'y',mDrugLT.DL,'color',mDrugLT.Strain,'lightness',mDrugLT.Sex); %,'subset',mDrugLT.Strain=='CD1');
+    g.set_color_options('hue_range',[50 542.5],'chroma',80,'lightness',60,'n_color',2);
+    g.facet_wrap(mDrugLT.Session,'scale','independent','ncols',3,'force_ticks',1,'column_labels',1);
+    g.stat_summary('geom','area','setylim',1);
+    g.axe_property('LineWidth',1.5,'FontSize',10,'XLim',[0 180],'tickdir','out');
+    g.set_names('x',' Time (m)','y','Estimated Brain Fentanyl (pMOL)','column','Session');
+    f = figure('units','normalized','outerposition',[0 0 .5 1]);
+    g.draw;
+    for i=1:length(g.facet_axes_handles)
+        g.facet_axes_handles(i).YLim=[0 500];
+    end
+    exportgraphics(f, [sub_dir, groupIntakefigs_savepath, 'Drug Level Grouped Sex and Strain.png']);
+    close(f)
+
+    % Drug Level by Sex during Training
+    g=gramm('x',mDrugLT.DLTime,'y',mDrugLT.DL,'color',mDrugLT.Sex,'subset',mDrugLT.sessionType=='Training');
+    g.set_color_options('hue_range',[50 542.5],'chroma',80,'lightness',60,'n_color',2);
+    g.facet_wrap(mDrugLT.Session,'scale','independent','ncols',5,'force_ticks',1,'column_labels',0);
+    g.stat_summary('geom','area','setylim',1);
+    g.axe_property('LineWidth',1.5,'FontSize',13,'XLim',[0 180],'tickdir','out');
+    g.set_names('x',' Time (m)','y','Brain DL (pMOL)');
+    g.set_title('Average Drug Level (Training)');
+    f=figure('Position',[100 100 1200 800]);
+    g.draw;
+    for i=1:length(g.facet_axes_handles)
+        g.facet_axes_handles(i).Title.String=['Day ' num2str(i)];
+        g.facet_axes_handles(i).Title.FontSize=12;
+        g.facet_axes_handles(i).YLim=[0 300];
+    end
+    exportgraphics(f,[sub_dir,groupIntakefigs_savepath, 'Drug Level Grouped Sex.pdf'],'ContentType','vector');
+    close(f)
+
+    % Drug Level by Sex and Session during Training Sessions 5, 10, 15
+    g=gramm('x',mDrugLT.DLTime,'y',mDrugLT.DL,'color',mDrugLT.Sex,'lightness',mDrugLT.Session,'subset',(mDrugLT.Session==5 | mDrugLT.Session==10 | mDrugLT.Session==15));
+    %g=gramm('x',mDrugLT.DLTime,'y',mDrugLT.DL*1000);
+    g.set_color_options('hue_range',[50 542.5],'chroma',80,'lightness',60,'n_color',2);
+    g.stat_summary('geom','line','setylim',1);
+    g.set_text_options('font','Helvetica','base_size',12,'legend_scaling',.75,'legend_title_scaling',.75);
+    g.axe_property('LineWidth',1.5,'XLim',[0 180],'YLim',[0 200],'tickdir','out');
+    g.set_names('x',' Time (m)','y','Estimated Brain Fentanyl');
+    g.set_title('Average Drug Level (Training days 1, 5, and 10)');
+    % g.no_legend();
+    f=figure('Position',[100 100 450 400]);
+    g.draw;
+    set(g.facet_axes_handles,'YTick', 0:50:200, 'XTick', [0 90 180]);
+    exportgraphics(f,[sub_dir, groupIntakefigs_savepath, 'Mean Drug Level Grouped by Sex and Session 5 10 15.pdf'],'ContentType','vector');
+    close(f)
 
     % Cumulative responses (rewarded head entries) by Sex and Session during Training Sessions 5, 10, 15
     % SS note: modded x and added missing y values again
