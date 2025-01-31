@@ -366,8 +366,6 @@ dep_var = ["Intake", "EarnedInfusions", "HeadEntries", "Latency", "ActiveLever",
 lme_form = " ~ Sex*Session + (1|TagNumber)";
 Training_LMEstats = getLMEstats(data, dep_var, lme_form);
 
-statVars = {Training_LMEstats};
-
 if strcmp(runType,'ER')
 
     % Extinction
@@ -380,12 +378,10 @@ if strcmp(runType,'ER')
     dep_var = ["HeadEntries", "Latency", "ActiveLever", "InactiveLever"];
     lme_form = " ~ Sex + (1|TagNumber)";
     Reinstatement_LMEstats = getLMEstats(data, dep_var, lme_form);
-
-    statVars = [StatVars, {Extinction_LMEstats, Reinstatement_LMEstats}];
 end
 
-statsname=[sub_dir, tabs_savepath, sub_dir, 'Oral SA Group Stats.mat'];
-save(statsname, statVars');
+statsname=[sub_dir, tabs_savepath, 'Oral SA Group Stats.mat'];
+save(statsname, 'Training_LMEstats', 'Extinction_LMEstats', 'Reinstatement_LMEstats');
 
 %% Individual Variability Suseptibility Modeling
 % INDIVIDUAL VARIABLES
