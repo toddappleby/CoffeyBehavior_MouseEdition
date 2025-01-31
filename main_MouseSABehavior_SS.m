@@ -32,9 +32,9 @@ firstHour = false; % separately run the first-hour of data (in addition to the f
 excludeData = true; % whether or not to exclude data (based on info in excludeData_flmn)
 
 %  Figure Options
-dailyData = false; % Should you run the daily figures
-pubFigs = false; % Should you run the final publication figures
-indivIntake_figs = false; 
+dailyData = true; % Should you run the daily figures
+pubFigs = true; % Should you run the final publication figures
+indivIntake_figs = true; 
 groupIntake_figs = true; 
 groupOralFentOutput_figs = false; 
 
@@ -129,6 +129,9 @@ if firstHour
     hmT = mT(:, addVars);
     hmT = renamevars(hmT, renameFrom, renameTo);
 end
+
+%% FILTER HEAD ENTRIES & EARNED REWARDS
+mT = getFilteredHEandReward(mT);
 
 %% check # data files per group
 % numtab is a table that shows the number of data files for C57 and CD1 males and females
@@ -241,16 +244,20 @@ if strcmp(runType, 'BE')
 
     aT=table(IDs,Sex,Strain,Alpha,Elastic);
     
+    if groupIntake_figs
+        subset = beT.Acquire=='Acquire';
 
-    subset = beT.Acquire=='Acquire';
-    figpath = [sub_dir, groupIntakefigs_savepath, 'BE Intake and Active Lever Grouped by Sex and Strain.png'];
-    BE_GroupFig(beT, {beT.measuredIntake, beT.ActiveLever}, ["Fentanyl Intake (μg/kg)", "Active Lever Presses"], subset, figpath);
-    
-    figpath = [sub_dir, groupIntakefigs_savepath, 'BE Latency and Rewards Grouped by Sex and Strain.png'];
-    BE_GroupFig(beT, {beT.Latency, beT.Latency}, ["Head Entry Latency", "Rewards"], subset, figpath);
+        figpath = [sub_dir, groupIntakefigs_savepath, 'BE Intake and Active Lever Grouped by Sex and Strain.png'];
+        BE_GroupFig(beT, {beT.measuredIntake, beT.ActiveLever}, ["Fentanyl Intake (μg/kg)", "Active Lever Presses"], subset, figpath);
+        
+        figpath = [sub_dir, groupIntakefigs_savepath, 'BE Latency and Rewards Grouped by Sex and Strain.png'];
+        BE_GroupFig(beT, {beT.Latency, beT.Latency}, ["Head Entry Latency", "Rewards"], subset, figpath);
+    end
 end
 
-%% Within Session Behavioral Analysis
+%% Within Session Behavioral Analysis 
+% Analyze Rewarded Lever Pressing Across the Session
+
 % Event Codes
 % 3 = Rewarded Press
 % 13 = Tone On
@@ -266,36 +273,10 @@ mDrugLT = table;
 
 disp(['Running individual within-session intake analysis for ' num2str(height(mTDL)) ' sessions...']);  
 for i=1:height(mTDL)
-    
-    % disp(i)
-    eventCode = mTDL.eventCode{i};
-    eventTime = mTDL.eventTime{i};
-    % get filtered head entry event codes and times
-    [eventCodeFilt,eventTimeFilt] = eventFilterHE(eventCode,eventTime); 
-    
-    % Analyze Rewarded Lever Pressing Across the Session
-    rewLP=eventTimeFilt(eventCodeFilt==13);
-    rewHE=eventTimeFilt(eventCodeFilt==98);
-
-    doseHE=[];
-
-    for j=1:height(rewHE)
-        if j==1
-            doseHE(j,1)=sum(rewLP<rewHE(j,1));
-        else
-            doseHE(j,1)=sum(rewLP<rewHE(j,1))-sum(doseHE(1:j-1,1));
-        end
-    end
-    cumulDoseHE = cumsum(doseHE);
-
-    if length(rewLP) ~= length(doseHE)
-        adj_rewLP = [];
-        for z = 1:length(rewHE)
-            adj_rewLP = [adj_rewLP; rewLP(find(rewLP < rewHE(z), 1, 'last'))];
-        end
-    else
-        adj_rewLP = rewLP;
-    end
+    doseHE = mTDL.doseHE{i};
+    cumulDoseHE = mTDL.cumulDoseHE{i};
+    rewHE = mTDL.rewHE{i};
+    adj_rewLP = mTDL.adj_rewLP{i};
 
     TagNumber=repmat([mTDL.TagNumber(i)],length(adj_rewLP),1);
     Session=repmat([mTDL.Session(i)],length(adj_rewLP),1);
@@ -325,189 +306,86 @@ for i=1:height(mTDL)
         mDrugLT = [mDrugLT; table(TagNumber, Session, DL, DLTime, Sex, Strain, sessionType)];
     end
     
-    if indivIntake_figs %& ((i == find((mTDL.TagNumber == categorical(43)) .* (mTDL.Session == 11))) || (i == find((mTDL.TagNumber == categorical(55)) .* (mTDL.Session == 11))))
-
-        % Analyze Rewarded Lever Pressing Across the Session
-        % timeLO=eventTime(eventCode==13);
-        % cumLO=[1:length(timeLO)]
-
-        g(1,1)=gramm('x',adj_rewLP/60, 'y', cumulDoseHE); 
-        g(1,1).stat_bin('normalization','cumcount','geom','stairs','edges',0:1:180);
-        g(2,1)=gramm('x',DLTime(:), 'y', DL(:)*1000); % SS note: what's this *1000 for?
-        g(2,1).geom_line();
-        g(1,1).axe_property('LineWidth',1.5,'FontSize',13,'XLim',[0 180],'tickdir','out');
-        g(1,1).set_names('x','Session Time (m)','y','Cumulative Infusions');
-        g(2,1).axe_property('LineWidth',1.5,'FontSize',13,'XLim',[0 180],'tickdir','out');
-        g(2,1).set_names('x','Session Time (m)','y','Brain Fentanyl Concentration pMOL');
-        f=figure('Position',[100 100 400 800]);
-
-        g.draw;
-        exportgraphics(f,fullfile([sub_dir, indivIntakefigs_savepath, ...
-                       'Tag', char(mTDL.TagNumber(i)), ...
-                       '_Session', char(string(mTDL.Session(i))), ...
-                       '_estBrainFent.pdf']),'ContentType','vector');
-        close(f);
+    if indivIntake_figs 
+        figpath = [sub_dir, indivIntakefigs_savepath, 'Tag', char(mTDL.TagNumber(i)), '_Session', char(string(mTDL.Session(i))), '_cumolDose_and_estBrainFent.pdf'];
+        indiv_sessionIntakeBrainFentFig({adj_rewLP/60, DLTime}, {cumulDoseHE, DL(:)*1000}, figpath);
     end
 end
 
+%%
 
 if indivIntake_figs
-    % can use this to fix the figure titles
-    % g.facet_axes_handles(i).Title.String=['Day ' num2str(i)];
     IDs=unique(mPressT.TagNumber);
     for j=1:length(IDs)
-        f=figure('Position',[1 1 1920 1080]);
-        g=gramm('x', mPressT.adj_rewLP/60,'y', mPressT.cumulDoseHE, 'subset', mPressT.TagNumber==IDs(j));
-        g.set_color_options('hue_range',[-65 265],'chroma',80,'lightness',70,'n_color',2);
-        g.facet_wrap(mPressT.Session,'scale','independent','ncols',4,'force_ticks',1,'column_labels',1);
-        g.stat_bin('normalization','cumcount','geom','stairs','edges',0:1:180);
-        g.axe_property('LineWidth',1.5,'FontSize',12,'XLim',[0 180],'tickdir','out');
-        g.set_names('x',' Time (m)','y','Cumulative Responses');
-        g.set_title(['ID: ' char(IDs(j))]);
-        g.draw;
-        for i=1:length(g.facet_axes_handles)
-            % g.facet_axes_handles(i).Title.String=['Day ' num2str(i)];
-            g.facet_axes_handles(i).Title.FontSize=12;
-            set(g.facet_axes_handles(i),'XTick',[0 90 180]);
-        end
-        exportgraphics(f,[sub_dir, indivIntakefigs_savepath, 'Tag', char(IDs(j)), '_All_Session_Infusions.png']);
-        close(f)
-    end
-        
-    for j=1:length(IDs)
-        f=figure('Position',[1 1 1920 1080]);
-        g=gramm('x',mDrugLT.DLTime,'y',mDrugLT.DL,'subset', mDrugLT.TagNumber==IDs(j));
-        g.set_color_options('hue_range',[-65 265],'chroma',80,'lightness',70,'n_color',1);
-        g.facet_wrap(mDrugLT.Session,'scale','independent','ncols',4,'force_ticks',1,'column_labels',1);
-        g.geom_line();
-        g.axe_property('LineWidth',1.5,'FontSize',12,'XLim',[0 180],'tickdir','out');
-        g.set_names('x',' Time (m)','y','Estimated Brain Fentanyl (pMOL)');
-        g.set_title(['ID: ' char(IDs(j))]);
-        g.draw;
-        for i=1:length(g.facet_axes_handles)
-            %g.facet_axes_handles(i).Title.String=['Day ' num2str(i)];
-            g.facet_axes_handles(i).Title.FontSize=12;
-            set(g.facet_axes_handles(i),'XTick',[0 90 180]);
-        end
-        exportgraphics(f, [sub_dir, indivIntakefigs_savepath, 'Tag', char(IDs(j)), 'All_Session_Drug_Level.png']);
-        close(f)
+        %indiv_allSessionFig(tab, subset, xvar, xlab, yvar, ylab, figtitle, facetwrap, subpstring, figpath)
+
+        figpath = [sub_dir, indivIntakefigs_savepath, 'Tag', char(IDs(j)), '_allSessionCumulDose.png'];
+        indiv_allSessionFig(mPressT, mPressT.TagNumber==IDs(j), 'adj_rewLP', "Time (m)", ...
+                            'cumulDoseHE', "Cumulative Responses", ...
+                             ['ID: ' char(IDs(j))], 'Session', figpath);
+
+        figpath = [sub_dir, indivIntakefigs_savepath, 'Tag', char(IDs(j)), '_allSessionEstBrainFent.png'];
+        indiv_allSessionFig(mDrugLT, mPressT.TagNumber==IDs(j), 'DLTime', "Time (m)", ...
+                            'DL', "Estimated Brain Fentanyl (pMOL)", ...
+                             ['ID: ' char(IDs(j))], 'Session', figpath);
     end
 end
 
 
 %% Grouped intake-across-session figures
 if groupIntake_figs
-    % % Drug Level by Strain and Sex 
-    % g=gramm('x',mDrugLT.DLTime,'y',mDrugLT.DL,'color',mDrugLT.Strain,'lightness',mDrugLT.Sex); %,'subset',mDrugLT.Strain=='CD1');
-    % g.set_color_options('hue_range',[50 542.5],'chroma',80,'lightness',60,'n_color',2);
-    % g.facet_wrap(mDrugLT.Session,'scale','independent','ncols',3,'force_ticks',1,'column_labels',1);
-    % g.stat_summary('geom','area','setylim',1);
-    % g.axe_property('LineWidth',1.5,'FontSize',10,'XLim',[0 180],'tickdir','out');
-    % g.set_names('x',' Time (m)','y','Estimated Brain Fentanyl (pMOL)','column','Session');
-    % f = figure('units','normalized','outerposition',[0 0 .5 1]);
-    % g.draw;
-    % for i=1:length(g.facet_axes_handles)
-    %     g.facet_axes_handles(i).YLim=[0 500];
-    % end
-    % exportgraphics(f, [sub_dir, groupIntakefigs_savepath, 'Drug Level Grouped Sex and Strain.png']);
-    % close(f)
-    % 
-    % % Drug Level by Sex during Training
-    % g=gramm('x',mDrugLT.DLTime,'y',mDrugLT.DL,'color',mDrugLT.Sex,'subset',mDrugLT.sessionType=='Training');
-    % g.set_color_options('hue_range',[50 542.5],'chroma',80,'lightness',60,'n_color',2);
-    % g.facet_wrap(mDrugLT.Session,'scale','independent','ncols',5,'force_ticks',1,'column_labels',0);
-    % g.stat_summary('geom','area','setylim',1);
-    % g.axe_property('LineWidth',1.5,'FontSize',13,'XLim',[0 180],'tickdir','out');
-    % g.set_names('x',' Time (m)','y','Brain DL (pMOL)');
-    % g.set_title('Average Drug Level (Training)');
-    % f=figure('Position',[100 100 1200 800]);
-    % g.draw;
-    % for i=1:length(g.facet_axes_handles)
-    %     g.facet_axes_handles(i).Title.String=['Day ' num2str(i)];
-    %     g.facet_axes_handles(i).Title.FontSize=12;
-    %     g.facet_axes_handles(i).YLim=[0 300];
-    % end
-    % exportgraphics(f,[sub_dir,groupIntakefigs_savepath, 'Drug Level Grouped Sex.pdf'],'ContentType','vector');
-    % close(f)
-    % 
-    % % Drug Level by Sex and Session during Training Sessions 5, 10, 15
-    % g=gramm('x',mDrugLT.DLTime,'y',mDrugLT.DL,'color',mDrugLT.Sex,'lightness',mDrugLT.Session,'subset',(mDrugLT.Session==5 | mDrugLT.Session==10 | mDrugLT.Session==15));
-    % %g=gramm('x',mDrugLT.DLTime,'y',mDrugLT.DL*1000);
-    % g.set_color_options('hue_range',[50 542.5],'chroma',80,'lightness',60,'n_color',2);
-    % g.stat_summary('geom','line','setylim',1);
-    % g.set_text_options('font','Helvetica','base_size',12,'legend_scaling',.75,'legend_title_scaling',.75);
-    % g.axe_property('LineWidth',1.5,'XLim',[0 180],'YLim',[0 200],'tickdir','out');
-    % g.set_names('x',' Time (m)','y','Estimated Brain Fentanyl');
-    % g.set_title('Average Drug Level (Training days 1, 5, and 10)');
-    % % g.no_legend();
-    % f=figure('Position',[100 100 450 400]);
-    % g.draw;
-    % set(g.facet_axes_handles,'YTick', 0:50:200, 'XTick', [0 90 180]);
-    % exportgraphics(f,[sub_dir, groupIntakefigs_savepath, 'Mean Drug Level Grouped by Sex and Session 5 10 15.pdf'],'ContentType','vector');
-    % close(f)
+    % group_allSessionFig(tab, xvar, xlab, yvar, ylab, colorGroup lightGroup, facetwrap, figpath, stat_type, set_yMax)
+
+    % Drug Level by Strain and Sex 
+    figpath = [sub_dir, groupIntakefigs_savepath, 'Drug Level Grouped by Sex and Strain.png'];
+    group_allSessionFig(mDrugLT, logical(ones([height(mDrugLT),1])), 'DLTime', 'Time (m)', 'DL', 'Estimated Brain Fentanyl (pMOL)', ...
+                        'Strain', 'Sex', 'Session', 'Group Drug Level', figpath, 'area');
+
+    % Drug Level by Strain and Sex during Training
+    figpath = [sub_dir,groupIntakefigs_savepath, 'Drug Level Grouped by Sex and Strain.pdf'];
+    group_allSessionFig(mDrugLT, mDrugLT.sessionType=='Training', 'DLTime', 'Time (m)', 'DL', 'Estimated Brain Fentanyl (pMOL)', ...
+                        'Strain', 'Sex', 'Session', 'Group Drug Level (Training)', figpath, 'area');
+
+    % Drug Level by Sex and Session during Training Sessions 5, 10, 15
+    figpath = [sub_dir, groupIntakefigs_savepath, 'Drug Level Grouped by Sex and Session 5 10 15.pdf'];
+    subset = (mDrugLT.Session==5 | mDrugLT.Session==10 | mDrugLT.Session==15);
+    group_allSessionFig(mDrugLT, subset, 'DLTime', 'Time (m)', 'DL', 'Estimated Brain Fentanyl (pMOL)', ...
+                        'Sex', 'Session', 'none', 'Average Group Drug Level (Sessions 5, 10, 15)', figpath, 'line');
 
     % Cumulative responses (rewarded head entries) by Sex and Session during Training Sessions 5, 10, 15
-    % SS note: modded x and added missing y values again
-    g=gramm('x',mPressT.adj_rewLP/60, 'y', mPressT.cumulDoseHE, 'color', mPressT.Sex, 'lightness', mPressT.Session, 'subset', (mPressT.Session==5 | mPressT.Session==10 | mPressT.Session==15));
-    g.set_color_options('hue_range',[50 542.5],'chroma',80,'lightness',60,'n_color',2);
-    g.stat_bin('normalization','cumcount','geom','stairs','edges',0:1:180);
-    g.set_text_options('font','Helvetica','base_size',12,'legend_scaling',.75,'legend_title_scaling',.75);
-    g.axe_property('LineWidth',1.5,'XLim',[0 180],'YLim',[0 300],'tickdir','out');
-    g.set_names('x',' Time (m)','y','Cumulative Responses');
-    g.set_title('Average Cumulative Responses');
-    
-    % g.no_legend();
-    f=figure('Position',[100 100 450 400]);
-    g.draw;
-    set(g.facet_axes_handles, 'YTick', 0:50:300, 'XTick', [0 90 180]);
-    exportgraphics(f,[sub_dir, groupIntakefigs_savepath, 'Mean Responses Grouped by Sex and Session 5 10 15.pdf'],'ContentType','vector');
-    close(f)
-
+    figpath = [sub_dir, groupIntakefigs_savepath, 'Mean Responses Grouped by Sex and Session 5 10 15.pdf'];
+    subset = (mPressT.Session==5 | mPressT.Session==10 | mPressT.Session==15);
+    group_allSessionFig(mPressT, subset, 'adj_rewLP', 'Time (m)', 'cumulDoseHE', 'Cumulative Responses', ...
+                        'Sex', 'Session', 'none', 'Mean Cumulative Responses (Sessions 5, 10, 15)', figpath, 'cumbin');
 end
 
 %% Statistic Linear Mixed Effects Models
 % Training
-IntakeTrainLME = fitlme(mT(mT.sessionType=='Training',:),'Intake ~ Sex*Session + (1|ID)');
-InfusionsTrainLME = fitlme(mT(mT.sessionType=='Training',:),'Infusions ~ Sex*Session + (1|ID)');
-HeadTrainLME = fitlme(mT(mT.sessionType=='Training',:),'HeadEntries ~ Sex*Session + (1|ID)');
-LatencyTrainLME = fitlme(mT(mT.sessionType=='Training',:),'Latency ~ Sex*Session + (1|ID)');
-ActiveTrainLME = fitlme(mT(mT.sessionType=='Training',:),'ActiveLever ~ Sex*Session + (1|ID)');
-InactiveTrainLME = fitlme(mT(mT.sessionType=='Training',:),'InactiveLever ~ Sex*Session + (1|ID)');
+data = mT(mT.sessionType == 'Training',:);
+dep_var = ["Intake", "EarnedInfusions", "HeadEntries", "Latency", "ActiveLever", "InactiveLever"];
+lme_form = " ~ Sex*Session + (1|TagNumber)";
+Training_LMEstats = getLMEstats(data, dep_var, lme_form);
 
-IntakeTrainF = anova(IntakeTrainLME,'DFMethod','satterthwaite');
-InfusionsTrainF = anova(InfusionsTrainLME,'DFMethod','satterthwaite');
-HeadTrainF = anova(HeadTrainLME,'DFMethod','satterthwaite');
-LatencyTrainF = anova(LatencyTrainLME,'DFMethod','satterthwaite');
-ActiveTrainF = anova(ActiveTrainLME,'DFMethod','satterthwaite');
-InactiveTrainF = anova(InactiveTrainLME,'DFMethod','satterthwaite');
+statVars = {Training_LMEstats};
 
-% Extinction
-HeadExtLME = fitlme(mT(mT.sessionType=='Extinction',:),'HeadEntries ~ Sex*Session + (1|ID)');
-LatencyExtLME = fitlme(mT(mT.sessionType=='Extinction',:),'Latency ~ Sex*Session + (1|ID)');
-ActiveExtLME = fitlme(mT(mT.sessionType=='Extinction',:),'ActiveLever ~ Sex*Session + (1|ID)');
-InactiveExtLME = fitlme(mT(mT.sessionType=='Extinction',:),'InactiveLever ~ Sex*Session + (1|ID)');
+if strcmp(runType,'ER')
 
-HeadExtF = anova(HeadExtLME,'DFMethod','satterthwaite');
-LatencyExtF = anova(LatencyExtLME,'DFMethod','satterthwaite');
-ActiveExtF = anova(ActiveExtLME,'DFMethod','satterthwaite');
-InactiveExtF = anova(InactiveExtLME,'DFMethod','satterthwaite');
+    % Extinction
+    data = mT(mT.sessionType=='Extinction',:);
+    dep_var = ["HeadEntries", "Latency", "ActiveLever", "InactiveLever"];
+    Extinction_LMEstats = getLMEstats(data, dep_var, lme_form);
+    
+    % Reinstatement
+    data = mT(mT.sessionType=='Reinstatement',:);
+    dep_var = ["HeadEntries", "Latency", "ActiveLever", "InactiveLever"];
+    lme_form = " ~ Sex + (1|TagNumber)";
+    Reinstatement_LMEstats = getLMEstats(data, dep_var, lme_form);
 
-% Reinstatement
-HeadReinLME = fitlme(mT(mT.Session>22,:),'HeadEntries ~ Sex*Session + (1|ID)');
-LatencyReinLME = fitlme(mT(mT.Session>22,:),'Latency ~ Sex*Session + (1|ID)');
-ActiveReinLME = fitlme(mT(mT.Session>22,:),'ActiveLever ~ Sex*Session + (1|ID)');
-InactiveReinLME = fitlme(mT(mT.Session>22,:),'InactiveLever ~ Sex*Session + (1|ID)');
+    statVars = [StatVars, {Extinction_LMEstats, Reinstatement_LMEstats}];
+end
 
-HeadReinF = anova(HeadReinLME,'DFMethod','satterthwaite');
-LatencyReinF = anova(LatencyReinLME,'DFMethod','satterthwaite');
-ActiveReinF = anova(ActiveReinLME,'DFMethod','satterthwaite');
-InactiveReinF = anova(InactiveReinLME,'DFMethod','satterthwaite');
-
-statsname=fullfile('Statistics','Oral SA Group Stats.mat');
-save(statsname,'IntakeTrainF','InfusionsTrainF','HeadTrainF','LatencyTrainF','ActiveTrainF','InactiveTrainF',...
-    'HeadExtF','LatencyExtF','ActiveExtF','InactiveExtF',...
-    'HeadReinF','LatencyReinF','ActiveReinF','InactiveReinF');
-
+statsname=[sub_dir, tabs_savepath, sub_dir, 'Oral SA Group Stats.mat'];
+save(statsname, statVars');
 
 %% Individual Variability Suseptibility Modeling
 % INDIVIDUAL VARIABLES
@@ -521,15 +399,6 @@ save(statsname,'IntakeTrainF','InfusionsTrainF','HeadTrainF','LatencyTrainF','Ac
 % Relapse = total presses during reinstatement
 % Cue Recall = HE Latency in reinstatement (invert?)tmpT
 
-% SS note: keep commented, all this is imported prior. 
-% Completely Raw Behavior Intake (Possible Fix to Minor Acq Issues)
-% for i=1:height(mT)
-% disp(num2str(height(mT)-i));    
-% raw=importOralSA(fullfile(mT.folder{i}, mT.name{i}));
-% [eventCode,eventTime] = EventExtractor(raw);
-% [eventCode,eventTime] = eventFilter(eventCode,eventTime);
-% end
-
 ID = unique(mT.TagNumber);
 [Dummy, Intake, Seeking, Association, Escalation, Extinction,  ...
  Persistence, Flexibility, Relapse, Recall] = deal([]);
@@ -539,17 +408,11 @@ Sex = categorical([]);
 for i=1:length(ID)
     Dummy(i,1)=1;       
     Intake(i,1)= mean(mT.Intake(mT.TagNumber==ID(i) & mT.Session>5 & mT.sessionType=='Training'));
-    % SS note: changed this to filteredHeadEntries
     Seeking(i,1)= mean(mT.filteredHeadEntries(mT.TagNumber==ID(i) & mT.Session>5 & mT.sessionType=='Training'));
-    % SS note: made this nanmax and nanmean so it wouldn't break for animals that had no active-lever press sessions during training
-    % SS note: changed this to lastLatency
     Association(i,1)= nanmean(mT.lastLatency(mT.TagNumber==ID(i) & mT.Session>5 & mT.sessionType=='Training')); 
-    % SS changed the x-value to polyfit from 1:1:10 to account for excluded session cases
     e = polyfit(double(mT.Session(mT.TagNumber==ID(i) & mT.sessionType=='Training')),mT.TotalInfusions(mT.TagNumber==ID(i) & mT.Session>5 & mT.sessionType=='Training'),1);
     Escalation(i,1)=e(1);
-    % SS note: made this nanmean so it wouldn't break for animals that had no active-lever press sessions during training
     Extinction(i,1)= nanmean(mT.ActiveLever(mT.TagNumber==ID(i) & mT.sessionType=='Extinction'));
-    % SS changed the x-value to polyfit from 1:1:10 to account for excluded session cases
     p = polyfit(double(mT.Session(mT.TagNumber==ID(i) & mT.sessionType=='Extinction')),mT.ActiveLever(mT.TagNumber==ID(i) & mT.sessionType=='Extinction'),1);
     Persistence(i,1)=0-p(1);
     Flexibility(i,1)=mean(mT.InactiveLever(mT.TagNumber==ID(i) & mT.sessionType=='Extinction'));
@@ -715,7 +578,13 @@ exportgraphics(f1,[sub_dir, groupOralFentOutput_savepath, 'Individual Difference
 
 
 %% ------------------------FUNCTIONS---------------------------------
-
+function [LME_stats] = getLMEstats(data, dep_var, lme_form)
+    LME_stats = struct;
+    for dv = 1:length(dep_var)
+        LME_stats.(strcat(dep_var(dv), "LME")) = fitlme(data, strcat(dep_var(dv), lme_form));
+        LME_stats.(strcat(dep_var(dv), "F")) = anova(LME_stats.(strcat(dep_var(dv), "LME")) ,'DFMethod','satterthwaite');
+    end
+end
 
 
 function [f] = plotViolins(ivT, yVars, yLabs)
@@ -750,7 +619,7 @@ function [f] = plotViolins(ivT, yVars, yLabs)
 end
 
 
-function [g] = groupBE_subplot(xvar, yvar, colorGroup, colorLab, lightGroup, lightLab, subset, xlab, ylab, leg)
+function [g] = BE_subplot(xvar, yvar, colorGroup, colorLab, lightGroup, lightLab, subset, xlab, ylab, leg)
     ymax = getYmax(yvar(subset));
     g(1,1)=gramm('x',xvar,'y',yvar,'color',colorGroup, 'lightness', lightGroup, 'subset', subset);
     g(1,1).set_color_options('hue_range',[0 360],'lightness_range',[85 35],'chroma_range',[30 70]);
@@ -766,6 +635,104 @@ function [g] = groupBE_subplot(xvar, yvar, colorGroup, colorLab, lightGroup, lig
 end
 
 
+function group_allSessionFig(tab, subset, xvar, xlab, yvar, ylab, colorGroup, lightGroup, facetwrap, figtitle, figpath, stat_type)
+    x = tab.(xvar);
+    y = tab.(yvar); 
+    cg = tab.(colorGroup);
+    lg = tab.(lightGroup);
+    if strcmp(xvar,'adj_rewLP')
+        x = x/60;
+    end
+
+    f = figure('units','normalized','outerposition',[0 0 .5 1]);
+    g=gramm('x',x(subset),'y',y(subset),'color',cg(subset),'lightness',lg(subset));
+    g.set_color_options('hue_range',[50 542.5],'chroma',80,'lightness',60,'n_color',2);
+    if ~strcmp(facetwrap,'none')
+        fw = tab.(facetwrap);
+        g.facet_wrap(fw(subset),'scale','independent','ncols',3,'force_ticks',1,'column_labels',1);
+        g.set_names('column','Session');
+    end
+    
+    if strcmp(stat_type, 'cumbin')
+        g.stat_bin('normalization','cumcount','geom','stairs','edges',0:1:180);
+    else
+        g.stat_summary('geom', stat_type,'setylim',1);
+    end
+    
+    g.axe_property('LineWidth',1.5,'FontSize',10,'XLim',[0 180],'tickdir','out');
+    g.set_names('x', xlab, 'y',ylab, 'color', colorGroup, 'lightness', lightGroup);
+    g.set_title(figtitle);
+    g.draw;
+    
+    yMax = 0;
+    
+    if strcmp(stat_type, 'cumbin')
+        for ss = 1:length(g.results.stat_bin)
+            yMax = max([yMax;g.results.stat_bin(ss).counts]);
+        end
+    else
+        for ss = 1:length(g.results.stat_summary)
+            if strcmp(stat_type, 'area')
+                yMax = max([yMax;g.results.stat_summary(ss).yci(:,2)]);
+            elseif strcmp(stat_type, 'line')
+                yMax = max([yMax;g.results.stat_summary(ss).y]);
+            end
+        end
+    end
+    yMax = yMax + (.05 * yMax);
+
+    for i=1:length(g.facet_axes_handles)
+        g.facet_axes_handles(i).YLim=[0 yMax];
+    end
+
+    exportgraphics(f, figpath);
+    % close(f)
+end
+
+
+function indiv_allSessionFig(tab, subset, xvar, xlab, yvar, ylab, figtitle, facetwrap, figpath)
+    x = tab.(xvar);
+    y = tab.(yvar);
+    fw = tab.(facetwrap);
+    if strcmp(xvar,'adj_rewLP')
+        x = x/60;
+    end
+
+    f=figure('Position',[1 1 1920 1080]);
+    g=gramm('x', x(subset), 'y', y(subset));
+    g.set_color_options('hue_range',[-65 265],'chroma',80,'lightness',70,'n_color',2);
+    g.facet_wrap(fw(subset),'scale','independent','ncols',4,'force_ticks',1);
+    g.stat_bin('normalization','cumcount','geom','stairs','edges',0:1:180);
+    g.axe_property('LineWidth',1.5,'FontSize',12,'XLim',[0 180],'tickdir','out');
+    g.set_names('x', xlab,'y',ylab);
+    g.set_title(figtitle);
+    g.draw;
+    for i=1:length(g.facet_axes_handles)
+        g.facet_axes_handles(i).Title.FontSize=12;
+        set(g.facet_axes_handles(i),'XTick',[0 90 180]);
+    end
+    exportgraphics(f, figpath);
+    close(f)
+end
+
+
+function indiv_sessionIntakeBrainFentFig(xvar, yvar, figpath)
+    f=figure('Position',[100 100 400 800]);
+    clear g
+    g(1,1)=gramm('x',xvar{1}, 'y', yvar{1}); 
+    g(1,1).stat_bin('normalization','cumcount','geom','stairs','edges',0:1:180);
+    g(2,1)=gramm('x',xvar{2}, 'y', yvar{2}); % SS note: what's this *1000 for?
+    g(2,1).geom_line();
+    g(1,1).axe_property('LineWidth',1.5,'FontSize',13,'XLim',[0 180],'tickdir','out');
+    g(1,1).set_names('x','Session Time (m)','y','Cumulative Infusions');
+    g(2,1).axe_property('LineWidth',1.5,'FontSize',13,'XLim',[0 180],'tickdir','out');
+    g(2,1).set_names('x','Session Time (m)','y','Brain Fentanyl Concentration pMOL');
+    g.draw();
+    exportgraphics(f,figpath,'ContentType','vector');
+    close(f);
+end
+
+
 function BE_GroupFig(tab, yvar, ylab, subset, figpath)
     xvar = log2(tab.unitPrice);
     xlab = 'Fentanyl Concentration (ug/mL)';
@@ -777,7 +744,7 @@ function BE_GroupFig(tab, yvar, ylab, subset, figpath)
     for col = 1:length(yvar)
         leg = col == 1;
         % [g] = groupBE_subplot(xvar, yvar, colorGroup, colorLab, lightGroup, lightLab, subset, xlab, ylab, row, col, leg)
-        g(1,col) = groupBE_subplot(xvar, yvar{col}, tab.Sex, 'Sex', tab.Strain, 'Strain', subset, xlab, ylab(col), leg);
+        g(1,col) = BE_subplot(xvar, yvar{col}, tab.Sex, 'Sex', tab.Strain, 'Strain', subset, xlab, ylab(col), leg);
     end
     g.draw
     for col = 1:length(yvar)
@@ -880,7 +847,57 @@ function [mT_tags] = getMTtags(runNum, runType, sessTypes, mKey)
 end
 
 
+function [mT] = getFilteredHEandReward(mT)
+    doseHE = cell([height(mT), 1]);
+    cumulDoseHE = cell([height(mT), 1]);
+    rewHE = cell([height(mT), 1]);
+    rewLP = cell([height(mT), 1]);
+    adj_rewLP = cell([height(mT), 1]);
+    eventTimeFiltHE = cell([height(mT), 1]);
+    eventCodeFiltHE = cell([height(mT), 1]);
+    
+    for i = 1:height(mT)
+        eventCode = mT.eventCode{i};
+        eventTime = mT.eventTime{i};
+    
+        if sum(eventCode==6) > 0
+            % get filtered head entry event codes and times
+            [eventCodeFiltHE{i},eventTimeFiltHE{i}] = eventFilterHE(eventCode,eventTime); 
+            
+            % Analyze Rewarded Lever Pressing Acroscs the Session
+            rewLP{i}=eventTimeFiltHE{i}(eventCodeFiltHE{i}==13);
+            rewHE{i}=eventTimeFiltHE{i}(eventCodeFiltHE{i}==98);
+            
+            temp_doseHE=[];
+            for j=1:length(rewHE{i})
+                if j==1
+                    temp_doseHE(j)=sum(rewLP{i}<rewHE{i}(j));
+                else
+                    temp_doseHE(j)=sum(rewLP{i}<rewHE{i}(j))-sum(temp_doseHE(1:j-1));
+                end
+            end
+            cumulDoseHE{i} = cumsum(temp_doseHE)';
+        end
+        doseHE{i} = temp_doseHE;
+        
+        % limit rewLP to rewarded lever presses with a head entry before the next rewarded lever press
+        if length(rewLP) ~= length(temp_doseHE)
+            temp_adj_rewLP = [];
+            for z = 1:length(rewHE{i})
+                temp_adj_rewLP = [temp_adj_rewLP; rewLP{i}(find(rewLP{i} < rewHE{i}(z), 1, 'last'))];
+            end
+        else
+            temp_adj_rewLP = rewLP{i};
+        end
+        adj_rewLP{i} = temp_adj_rewLP;
+    end
+    mT = [mT, table(cumulDoseHE, rewHE, rewLP, adj_rewLP, doseHE, eventTimeFiltHE, eventCodeFiltHE)];
+end
 
+% preFilt_EarnedInfusions
+% preFilt_totalInfusions
+% preFiltHeadEntries
+% preFiltLatency
 
 %% BE Battery & Hot Plate
 % 
