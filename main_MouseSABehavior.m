@@ -12,20 +12,22 @@
 
 %% ------------- BEGIN CODE --------------
 % USER INPUTS
+close all
+clear all
 
 % IMPORT PATHS
-main_folder = 'C:\Users\schle\Documents\GitHub\CoffeyBehavior';
+main_folder = pwd;
 cd(main_folder)
 addpath(genpath(main_folder))
-masterTable_flnm = '.\05-Feb-2025_masterTable.mat'; % the masterTable .mat file loaded in if createNewMasterTable == false
+masterTable_flnm = '.\06-Feb-2025_masterTable.mat'; % the masterTable .mat file loaded in if createNewMasterTable == false
 beh_datapath = {'.\All Behavior'}; % Used to generate a new masterTable if createNewMasterTable == true
 masterSheet_flnm = '.\Golden R01 Behavior Master Key.xlsx'; % Key describing information specific to each animal
 BE_intake_canonical_flnm = '.\2024.12.09.BE Intake Canonical.xlsx'; % Key for drug concentration, dose, and intake only used if runType == 'BE'
 experimentKey_flnm = '.\Experiment Key.xlsx'; % Key for
 
 % MISC. SETTINGS
-runNum = 4; % options: -1 for all runs, otherwise single runs 1, 2, 3, or 4
-runType = 'ER'; % options: 'ER' (Extinction Reinstatement), 'BE' (Behavioral Economics), 'SA' (Self Administration)
+runNum = -1; % options: -1 for all runs, otherwise single runs 1, 2, 3, or 4
+runType = 'BE'; % options: 'ER' (Extinction Reinstatement), 'BE' (Behavioral Economics), 'SA' (Self Administration)
 createNewMasterTable = false; % true: generates & saves a new master table from medPC files in datapath. false: reads mT in from masterTable_flnm if set to false, otherwise 
 firstHour = true; % true: acquire data from the first-hour of data and analyze in addition to the full sessions
 excludeData = true; % true: excludes data based on the 'RemoveSession' column of masterSheet
@@ -47,7 +49,7 @@ groupOralFentOutput_figs = false; % true: generate severity figures
 % data saved. 
 % Currently only daily & publication figures are saved with current date in
 % the file name, so be aware of overwrite risk for other figures.
-allfig_savefolder = 'C:\Users\schle\Documents\All Figures\';
+allfig_savefolder = 'All Figures\';
 dailyfigs_savepath = 'Daily Figures\';
 pubfigs_savepath = 'Publication Figures\';
 indivIntakefigs_savepath = 'Individual Intake Figures\';
@@ -90,7 +92,7 @@ sessTypes = getSessTypes(runType); % returns empty if runType == 'all', won't be
 %% IMPORT DATA
 
 if createNewMasterTable
-    mT = createMasterTable(main_folder, beh_datapath, masterSheet_flnm);
+    mT = createMasterTable(main_folder, beh_datapath, masterSheet_flnm,experimentKey_flnm);
 else
     load(masterTable_flnm)
 end
@@ -104,8 +106,8 @@ mT_ind = find(ismember(mT.TagNumber, mT_tags));
 mT = mT(mT_ind,:);
 if strcmp(runType, 'SA')
     remove_inds = find(mT.sessionType ~= categorical("Training") & mT.sessionType ~= categorical("PreTraining"));
-elseif strcmp(runType, 'BE')
-    remove_inds = find(mT.sessionType == categorical("Extinction") | mT.sessionType == categorical("ProgressiveRatio") | isundefined(mT.sessionType));
+% elseif strcmp(runType, 'BE')
+%     remove_inds = find(mT.sessionType == categorical("Extinction") | mT.sessionType == categorical("ProgressiveRatio") | isundefined(mT.sessionType));
 else
     remove_inds = [];
 end
@@ -348,7 +350,7 @@ for i=1:height(mTDL)
     end
 end
 
-%%
+%
 
 if indivIntake_figs
     IDs=unique(mPressT.TagNumber);
@@ -923,18 +925,18 @@ function [hmT] = getFirstHour(mT)
             EC = EC(ET <= 3600);
             ET = ET(ET <= 3600); 
 
-            if strcmp(hourVars{hv}, 'EarnedInfusions')
-                % calculate earned and total infusions 
-                if mT.sessionType(fl) == categorical("Reinstatement")
-                    dat(fl) = NaN;
-                elseif mT.TotalInfusions(fl) == 0
-                    dat(fl) = NaN;
-                else
-                    dat(fl) = length(find(EC==hourCodes(hv)));
-                end
-            else
-                dat(fl) = length(find(EC==hourCodes(hv)));
-            end
+            % if strcmp(hourVars{hv}, 'EarnedInfusions')
+            %     % calculate earned and total infusions 
+            %     if mT.sessionType(fl) == categorical("Reinstatement")
+            %         dat(fl) = NaN;
+            %     elseif mT.TotalInfusions(fl) == 0
+            %         dat(fl) = NaN;
+            %     else
+            %         dat(fl) = length(find(EC==hourCodes(hv)));
+            %     end
+            % else
+            %     dat(fl) = length(find(EC==hourCodes(hv)));
+            % end
             
             % disp(length(find(EC==hourCodes(hv))))
             if strcmp(hourVars{hv}, 'InactiveLever') & (dat(fl) == 0)

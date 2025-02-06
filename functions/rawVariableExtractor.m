@@ -35,7 +35,7 @@ function [varTable] = rawVariableExtractor(varTable, eventCode, eventTime)
     end
 
     HE_timeFilt = 2;
-    % filter head entries, remove entries that happen within 5s of each other
+    % filter head entries, remove entries that happen within  HE_timeFilt(s) of each other
     time_prefiltHE=eventTime(eventCode==6);
     remove_inds = logical([0; diff(time_prefiltHE) < HE_timeFilt]);
     time_HE = time_prefiltHE;

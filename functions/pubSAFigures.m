@@ -3,6 +3,8 @@ function pubSAFigures(mT, runType, dt, figFold)
 % mT = the master behavior table from main_MouseSABehavior
 % dt = current date time variable
 % figFold = Name of the subfolder to save in (relative, folder name is suffiecient
+% SS Note: 
+mT.sessionType=categorical(mT.sessionType);
     if strcmp(runType, 'ER')
         titles = {'Self-Administration', 'Days 13-15', 'Extinction', 'Reinstatement'}; % titles of subplots 1-4 for each figure
     elseif strcmp(runType, 'BE')
@@ -263,7 +265,7 @@ end
 
 %%
 function [g] = plotPubFig(mT, runType, yVar, yLab, subInd, titles, figName, figType, donut, varargin)
-    try
+    % try
         % why am I parsing it this way? this is dumb    
         p = inputParser;
         addParameter(p, 'GrammOptions', {});             % For gramm initial options
@@ -387,9 +389,9 @@ function [g] = plotPubFig(mT, runType, yVar, yLab, subInd, titles, figName, figT
         if donut
             plotDonut(mT, subInd, g, figName, figType)
         end
-    catch
-        disp('oh no! had to skip a figure, wonder why??')
-    end    
+    % catch
+        % disp('oh no! had to skip a figure, wonder why??')
+    % end    
 end
     
 function plotDonut(mT, subInd, g, figName, figType)

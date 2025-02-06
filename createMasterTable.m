@@ -60,15 +60,15 @@ function [mT] = createMasterTable(main_folder, beh_datapath, masterKey_flnm, exp
                     totalIntake = NaN;
                     Concentration = NaN;
                     DoseVolume = NaN;
-                    SessionType = NaN;
+                    sessionType = NaN;
                 else
                     Concentration = expKey.FentanylConcentration_ug_ml_(expKey_ind);
                     DoseVolume = expKey.VolumePerDose_mL_(expKey_ind);
                     Intake = DoseVolume * Concentration * varTable.EarnedInfusions(height(varTable));
                     totalIntake = DoseVolume * Concentration * varTable.TotalInfusions(height(varTable));
-                    SessionType = expKey.SessionType(expKey_ind);
+                    sessionType = expKey.SessionType(expKey_ind);
                 end
-                drugIntakeTab = table(SessionType,Concentration, DoseVolume, Intake, totalIntake);
+                drugIntakeTab = table(sessionType,Concentration, DoseVolume, Intake, totalIntake);
 
                 % Concatonate the Master Table
                 mT=[mT; [varTable, drugIntakeTab]];
