@@ -26,7 +26,7 @@ experimentKey_flnm = '.\Experiment Key.xlsx';
 
 % Misc. Settings
 runNum = 4; % -1 for all runs
-runType = 'BE'; % 'ER' (Extinction Reinstatement), 'BE' (Behavioral Economics), 'SA' (Self Administration), 'E_BE_PR' (Extinction, Behavioral Economics, Progressive Ratio)
+runType = 'ER'; % 'ER' (Extinction Reinstatement), 'BE' (Behavioral Economics), 'SA' (Self Administration), 'E_BE_PR' (Extinction, Behavioral Economics, Progressive Ratio)
 createNewMasterTable = false; % reads mT in from masterTable_flnm if set to true, otherwise generates & saves a new one from beh_datapath
 firstHour = true; % separately run the first-hour of data (in addition to the full session)
 excludeData = true; % whether or not to exclude data (based on info in excludeData_flmn)
@@ -393,6 +393,7 @@ if strcmp(runType,'ER')
     % Extinction
     data = mT(mT.sessionType=='Extinction',:);
     dep_var = ["HeadEntries", "Latency", "ActiveLever", "InactiveLever"];
+    lme_form = " ~ Sex*Session + (1|TagNumber)";
     Extinction_LMEstats = getLMEstats(data, dep_var, lme_form);
     
     % Reinstatement
