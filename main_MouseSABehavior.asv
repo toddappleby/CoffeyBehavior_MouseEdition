@@ -32,13 +32,11 @@ excludeData = true; % true: excludes data based on the 'RemoveSession' column of
 acquisition_thresh = 10; % to be labeled as "Acquire", animal must achieve an average number of infusions in the second weak of Training sessions greater than this threshold
 
 % FIGURE OPTIONS
-% Currently, if figures are generated they are also saved. 
 dailyFigs = true; % true: generate daily figures from dailySAFigures.m
 pubFigs = true; % true: generate publication figures from pubSAFigures.m
 indivIntake_figs = true; % true: generate figures for individual animal behavior across & within sessions
 groupIntake_figs = true; % true: generate figures grouped by sex, strain, etc. for animal behavior across & within sessions
 groupOralFentOutput_figs = false; % true: generate severity figures
-% SSnote: add figure save type option
 
 % SAVE PATHS
 % Each dataset run (determined by runNum and runType) will have its own
@@ -57,7 +55,7 @@ tabs_savepath = 'Behavior Tables\';
 
 %% HOUSEKEEPING
 
-dt = char(datetime('today')); % Used for Daily & Publication figure savefile names
+dt = char(datetime('today')); % Used for Daily & Publication figure save
 
 % Import Master Key
 opts = detectImportOptions(masterSheet_flnm);
