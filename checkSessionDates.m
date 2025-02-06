@@ -4,26 +4,21 @@
 %% USER SETTINGS
 main_folder = 'C:\Users\schle\Documents\GitHub\CoffeyBehavior';
 masterKey_flnm = [main_folder, '\Golden R01 Behavior Master Key.xlsx'];
-sessionDateKey_flnm = [main_folder, '\Session Date Key.xlsx'];
+experimentKey_flnm = [main_folder, '\Experiment Key.xlsx'];
+masterTable_flnm = [main_folder, '\05-Feb-2025_masterTable.mat']; % used if createNewMasterTable == false 
+beh_datapath = {[main_folder, '\All Behavior']};
+
 createNewMasterTable = false; % if session numbers need to beupdated and correctFiles is true, a new master table will be created after updating medPC files regardless of this setting
 correctFiles = true;
-
 runType = 'all'; % 'ER' (Extinction Reinstatement) or 'BE' (Behavioral Economics) or 'SA' (Self Administration) or 'E-BE-PR (Extinction, Beh)
 runNum = -1; % if runNum == -1, get all runs
 
-masterTable_flnm = [main_folder, '\27-Jan-2025_masterTable.mat']; % used if createNewMasterTable == false 
-beh_datapath = {[main_folder, '\All Behavior']};
-
 %% EXPERIMENT TYPE DEFINITIONS FOR LOGICAL INDEXING
 % need to updating the indexing from this to exclude things that include
-% these session types but also include unstated session types. works for
-% now. 
-exp_types = dictionary(["ER", "BE", "E_BE_PR"], ...
-                        { ...
-                        {'SelfAdministration', 'Extinction', 'Reinstatement'}, ...
-                        {'SelfAdministration', 'BehavioralEconomics'}, ...
-                        {'SelfAdministration', 'Extinction', 'ProgressiveRatio', 'BehavioralEconomics'} ...
-                        });
+% these session types but also include unstated session types. works for now. 
+exp_types = dictionary(["ER", "BE"], ...
+                        {{'SelfAdministration', 'Extinction', 'Reinstatement'}, ...
+                         {'SelfAdministration', 'BehavioralEconomics'}});
 
 %% GET DATA
 cd(main_folder)
@@ -32,10 +27,10 @@ addpath(genpath(main_folder))
 opts = detectImportOptions(masterKey_flnm);
 opts = setvartype(opts,{'TagNumber','ID','Cage','Sex','Strain','TimeOfBehavior'},'categorical'); % Must be variables in the master key
 mKey=readtable(masterKey_flnm, opts);
-sessDatKey = readtable(sessionDateKey_flnm);
+expKey = readtable(experimentKey_flnm);
 
 if createNewMasterTable
-    mT = createMasterTable(main_folder, beh_datapath, masterKey_flnm);
+    mT = createMasterTable(main_folder, beh_datapath, masterKey_flnm, experimentKey_flnm);
 else
     load(masterTable_flnm)
 end
@@ -46,10 +41,10 @@ end
 mKey = setExperiment_mKey(mKey, exp_types);
 
 % indexing of data to include in checks
-key_ind = ones([length(sessDatKey.Run), 1]);
+key_ind = ones([length(expKey.Run), 1]);
 if runNum ~= -1
     runInd = mKey.Run == runNum;
-    key_ind = key_ind .* (sessDatKey.Run == runNum);
+    key_ind = key_ind .* (expKey.Run == runNum);
 else
     runInd = ones([length(mKey.Run), 1]); 
 
@@ -61,7 +56,7 @@ if ~strcmp(runType, 'all')
     for typ = 1:length(sessTypes)
         expInd = expInd .* mKey.(sessTypes{typ});
     end
-    key_ind = key_ind .* (categorical(sessDatKey.Experiment) == categorical(string(runType)));
+    key_ind = key_ind .* (categorical(expKey.Experiment) == categorical(string(runType)));
 else
     expInd = ones([length(mKey.Run), 1]);
 end
@@ -73,24 +68,27 @@ mT_ind = find(ismember(mT.TagNumber, tagNum));
 
 dT = mT(mT_ind,:);
 dT = setExperiment_dT(dT, mKey);
-sdKey = sessDatKey(key_ind,:);
+expKey = expKey(key_ind,:);
 date = dT.Date;
 sess = dT.Session;
-type = dT.sessionType;
+if any(ismember(dT.Properties.VariableNames, 'sessionType'))
+    type = dT.sessionType;
+else
+    type = repmat(categorical("undefined"), [length(sess),1]);
+end
 
 % avoid bugs if session type is undefined
-type(find(isundefined(type))) = categorical("undefined");
+type(isundefined(type)) = categorical("undefined");
 
 % annoying formatting problems pulling dates from sheet
-keyDate = sdKey.Date;
-temp = cell ([length(keyDate), 1]);
+keyDate = expKey.Date;
+temp = cell([height(expKey), 1]);
 for kd = 1:length(keyDate)
-    d = keyDate(kd);
-    d = d{1};
-    d = char(d(1:end-1));
+    d = char(keyDate{kd});
+    d = char(strrep(d, "'", ''));
     temp{kd} = d;
 end
-sdKey.Date = temp;
+expKey.Date = temp;
 
 %% CHECK 1:1 for date, session num, and session type
 % sessDate = checkUnique('session', sess, 'date', date);
@@ -102,14 +100,14 @@ sdKey.Date = temp;
 incorrect_session = [];
 incorrect_type = [];
 
-for d = 1:length(sdKey.Date)
-    key_date = sdKey.Date(d);
-    key_session = sdKey.Session(d);
-    key_type = sdKey.SessionType(d);
-    key_exp = sdKey.Experiment(d);
+for d = 1:length(expKey.Date)
+    key_date = expKey.Date(d);
+    key_session = expKey.Session(d);
+    key_type = expKey.SessionType(d);
+    key_exp = expKey.Experiment(d);
     
-    wrong_session = find((string(date) == string(key_date{1})) .* (dT.Session ~= key_session) .* strcmp(dT.Experiment, key_exp{1}));
-    wrong_type = find((string(date) == string(key_date{1})) .* (dT.sessionType ~= key_type{1}) .* strcmp(dT.Experiment, key_exp{1}));
+    wrong_session = find((string(date) == string(key_date{1})) .* (sess ~= key_session) .* strcmp(dT.Experiment, key_exp{1}));
+    wrong_type = find((string(date) == string(key_date{1})) .* (type ~= key_type{1}) .* strcmp(dT.Experiment, key_exp{1}));
 
     incorrect_session = [incorrect_session; wrong_session];
     incorrect_type = [incorrect_type; wrong_type];
@@ -123,7 +121,7 @@ for d = 1:length(sdKey.Date)
     end
 
     if ~isempty(wrong_type)
-        disp(['Incorrect Session Types logged for ', key_date{1}, '(Session Type = ', key_type{1}, ') :'])
+        disp(['Incorrect Session Types logged for ', char(key_date{1}), '(Session Type = ', key_type{1}, ') :'])
         for is = 1:length(wrong_type)
             disp(['     Tag ', char(dT.TagNumber(wrong_type(is))), ' labeled as Session Type ', char(type(wrong_type(is)))]);
         end
@@ -176,7 +174,7 @@ hold off
 %% CORRECT MEDPC FILES
 if correctFiles
     if ~isempty(incorrect_session) || ~isempty(incorrect_type)
-        dT = corrections(beh_datapath, dT, mKey, incorrect_session, incorrect_type, sdKey, main_folder, masterKey_flnm);
+        dT = corrections(beh_datapath, dT, mKey, incorrect_session, incorrect_type, expKey, main_folder, masterKey_flnm);
     else
         disp('No corrections to be made!')
         disp(' ')
@@ -197,7 +195,7 @@ function [dT] = corrections(beh_datapath, dT, mKey, incorrect_session, incorrect
         % correct incorrect sessions in medPC data files
         correctSessions(dT, mKey, incorrect_session, sdKey)
         % create new master table
-        dT = createMasterTable(main_folder, beh_datapath, masterKey_flnm);
+        dT = createMasterTable(main_folder, beh_datapath, masterKey_flnm, experimentKey_flnm);
     end
     
    if ~isempty(incorrect_type)
@@ -261,11 +259,10 @@ function [dT] = correctTypes(dT, mKey, incorrect_type, sdKey)
         this_date = char(dT.Date(incorrect_type(it)));
         this_tag = dT.TagNumber(incorrect_type(it));
         mKey_ind = (mKey.TagNumber==this_tag);
-        this_exp = mKey.Experiment(mKey_ind);
-        this_exp = this_exp{1};
+        this_exp = mKey.Experiment{mKey_ind};
         this_run = mKey.Run(mKey_ind);
 
-        sdKey_ind = find(strcmp(sdKey.Date,char(this_date)) .* (sdKey.Run == this_run) .* strcmp(sdKey.Experiment, this_exp));
+        sdKey_ind = find(strcmp(sdKey.Date,string(this_date)) .* (sdKey.Run == this_run) .* strcmp(sdKey.Experiment, this_exp));
         corr_type = categorical(string(sdKey.SessionType{sdKey_ind}));
         dT.sessionType(incorrect_type(it)) = corr_type;
     end
