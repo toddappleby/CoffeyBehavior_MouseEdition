@@ -1,270 +1,274 @@
-function pubSAFigures(mT, runType, dt, figFold)
+function pubSAFigures(mT, runType, dex, figFold)
 % pubSAFigures Generates Clean Subset of Figures for Publication
-% mT = the master behavior table from main_MouseSABehavior
+% pT = the master behavior table from main_MouseSABehavior
 % dt = current date time variable
 % figFold = Name of the subfolder to save in (relative, folder name is suffiecient
-% SS Note: 
-mT.sessionType=categorical(mT.sessionType);
-    if strcmp(runType, 'ER')
-        titles = {'Self-Administration', 'Days 13-15', 'Extinction', 'Reinstatement'}; % titles of subplots 1-4 for each figure
-    elseif strcmp(runType, 'BE')
-        titles = {'Self-Administration', 'Days 13-15', 'Behavioral Economics', 'Retraining'};
-    elseif strcmp(runType,'SA')
-        titles = {'Self-Administration', 'Days 13-15'};
-    end
-    colorOptions = {'hue_range',[90 450],'lightness_range',[85 35],'chroma_range',[30 70]};
-    figType = '.png'; % image save type
-    
-    %% Active Lever
-    fnum = 1;
-    figNames{fnum} = fullfile(figFold,[dt, '_ActiveLeverAcquire']);
-    subset = {{'Acquire', {'Acquire'}}};
-    subInds{fnum} = getSubInds(mT, subset);
-    yVars{fnum} = 'ActiveLever';
-    yLabs{fnum} = 'Active Lever';
-    grammOptions{fnum} = {'color', mT.Sex, 'lightness', mT.Strain};        
-    orderOptions{fnum} = {'color', {'Female','Male'}, 'lightness', {'c57', 'CD1'}};
-    legendOptions{fnum} = {'x','Sex'};
-    donut{fnum} = false; 
 
-
-    %% C57 Active Lever, Acquirers
-    fnum = 2;
-    figNames{fnum} = fullfile(figFold,[dt, '_ActiveLeverC57Acquire']);
-    subset = {{'Strain', {'c57'}} ...
-              {'Acquire', {'Acquire'}} ...
-              };
-    subInds{fnum} = getSubInds(mT, subset);
-    yVars{fnum} = 'ActiveLever';
-    yLabs{fnum} = 'Active Lever';
-    grammOptions{fnum} = {'color',mT.Sex};        
-    orderOptions{fnum} = {'color',{'Female','Male'}};
-    legendOptions{fnum} = {'x','Sex'};
-    donut{fnum} = false; 
-
-    %% CD1 Active Lever, Acquirers
-    fnum = 3;
-    figNames{fnum} = fullfile(figFold,[dt, '_ActiveLeverCD1Acquire']);
-    subset = {{'Strain', {'CD1'}} ...
-              {'Acquire', {'Acquire'}} ...
-              };
-    subInds{fnum} = getSubInds(mT, subset);
-    yVars{fnum} = 'ActiveLever';
-    yLabs{fnum} = 'Active Lever';
-    grammOptions{fnum} = {'color',mT.Sex};        
-    orderOptions{fnum} = {'color',{'Female','Male'}};
-    legendOptions{fnum} = {'x','Sex'};
-    donut{fnum} = false; 
-
-    %% C57 Active Lever
-    % SS note: Bar graph axes being set weird compared to the rest, why? 
-    fnum = 4;
-    figNames{fnum} = fullfile(figFold,[dt, '_ActiveLeverC57']);
-    subset = {{'Strain', {'c57'}}};
-    subInds{fnum} = getSubInds(mT, subset);
-    yVars{fnum} = 'ActiveLever';
-    yLabs{fnum} = 'Active Lever';
-    grammOptions{fnum} = {'color',mT.Sex, 'lightness',mT.Acquire};        
-    orderOptions{fnum} = {'color',{'Female','Male'}, 'lightness',{'NonAcquire','Acquire'}};
-    legendOptions{fnum} = {'x','Sex'};
-    donut{fnum} = true; 
-
-    %% CD1 Active Lever
-    % SS note: Bar graph axes being set weird compared to the rest, why?
-    fnum = 5;
-    figNames{fnum} = fullfile(figFold,[dt, '_ActiveLeverCD1']);
-    subset = {{'Strain', {'CD1'}}};
-    subInds{fnum} = getSubInds(mT, subset);
-    yVars{fnum} = 'ActiveLever';
-    yLabs{fnum} = 'Active Lever';
-    grammOptions{fnum} = {'color',mT.Sex, 'lightness',mT.Acquire};        
-    orderOptions{fnum} = {'color',{'Female','Male'}, 'lightness',{'NonAcquire','Acquire'}};
-    legendOptions{fnum} = {'x','Sex'};
-    donut{fnum} = true; 
-
-    %% C57 Inactive Lever
-    % SS note: Bar graph axes being set weird compared to the rest, why?
-    fnum = 6; 
-    figNames{fnum} = fullfile(figFold,[dt, '_InactiveLeverC57']);
-    subset = {{'Strain', {'c57'}}};
-    subInds{fnum} = getSubInds(mT, subset);
-    yVars{fnum} = 'InactiveLever';
-    yLabs{fnum} = 'Inactive Lever';
-    grammOptions{fnum} = {'color',mT.Sex, 'lightness',mT.Acquire};        
-    orderOptions{fnum} = {'color',{'Female','Male'}, 'lightness',{'NonAcquire','Acquire'}};
-    legendOptions{fnum} = {'x','Sex'};
-    donut{fnum} = false; 
-
-    %% CD1 Inactive Lever
-    % SS note: Bar graph axes being set weird compared to the rest, why?
-    fnum = 7;
-    figNames{fnum} = fullfile(figFold,[dt, '_InactiveLeverCD1']);
-    subset = {{'Strain', {'CD1'}}};
-    subInds{fnum} = getSubInds(mT, subset);
-    yVars{fnum} = 'InactiveLever';
-    yLabs{fnum} = 'Inactive Lever';
-    grammOptions{fnum} = {'color',mT.Sex, 'lightness',mT.Acquire};        
-    orderOptions{fnum} = {'color',{'Female','Male'}, 'lightness',{'NonAcquire','Acquire'}};
-    legendOptions{fnum} = {'x','Sex'};
-    donut{fnum} = false; 
-
-    %% C57 Head Entries, Acquirers
-    fnum = 8;
-    figNames{fnum} = fullfile(figFold,[dt, '_HeadEntriesC57Acquire']);
-    subset = {{'Strain', {'c57'}} ...
-              {'Acquire', {'Acquire'}} ...
-              };
-    subInds{fnum} = getSubInds(mT, subset);
-    yVars{fnum} = 'HeadEntries';
-    yLabs{fnum} = 'Head Entries';
-    grammOptions{fnum} = {'color',mT.Sex};        
-    orderOptions{fnum} = {'color',{'Female','Male'}};
-    legendOptions{fnum} = {'x','Sex'};
-    donut{fnum} = false; 
-
-    %% CD1 HeadEntries, Acquirers
-    fnum = 9;
-    figNames{fnum} = fullfile(figFold,[dt, '_HeadEntriesLeverCD1Acquire']);
-    subset = {{'Strain', {'CD1'}} ...
-              {'Acquire', {'Acquire'}} ...
-              };
-    subInds{fnum} = getSubInds(mT, subset);
-    yVars{fnum} = 'HeadEntries';
-    yLabs{fnum} = 'Head Entries';
-    grammOptions{fnum} = {'color',mT.Sex};        
-    orderOptions{fnum} = {'color',{'Female','Male'}};
-    legendOptions{fnum} = {'x','Sex'};
-    donut{fnum} = false; 
-
-    %% C57 Latency, Acquirers
-    fnum = 10;
-    figNames{fnum} = fullfile(figFold,[dt, '_LatencyC57Acquire']);
-    subset = {{'Strain', {'c57'}} ...
-              {'Acquire', {'Acquire'}} ...
-              };
-    subInds{fnum} = getSubInds(mT, subset);
-    yVars{fnum} = 'HeadEntries';
-    yVars{fnum} = 'Latency';
-    yLabs{fnum} = 'Head Entry Latency';
-    grammOptions{fnum} = {'color',mT.Sex};        
-    orderOptions{fnum} = {'color',{'Female','Male'}};
-    legendOptions{fnum} = {'x','Sex'};
-    donut{fnum} = false; 
-
-    %% CD1 Latency, Acquirers
-    fnum = 11;
-    figNames{fnum} = fullfile(figFold,[dt, '_LatencyCD1Acquire']);
-    subset = {{'Strain', {'CD1'}} ...
-              {'Acquire', {'Acquire'}} ...
-              };
-    subInds{fnum} = getSubInds(mT, subset);
-    yVars{fnum} = 'Latency';
-    yLabs{fnum} = 'Head Entry Latency';
-    grammOptions{fnum} = {'color',mT.Sex};        
-    orderOptions{fnum} = {'color',{'Female','Male'}};
-    legendOptions{fnum} = {'x','Sex'};
-    donut{fnum} = false; 
-
-    %% C57 Intake, Acquirers
-    fnum = 12;
-    figNames{fnum} = fullfile(figFold,[dt, '_IntakeC57Acquire']);
-    subset = {{'Strain', {'c57'}} ...
-              {'Acquire', {'Acquire'}} ...
-              };
-    subInds{fnum} = getSubInds(mT, subset);
-    yVars{fnum} = 'Intake';
-    yLabs{fnum} = 'Fentanyl Intake (ug/kg)';
-    grammOptions{fnum} = {'color',mT.Sex};        
-    orderOptions{fnum} = {'color',{'Female','Male'}};
-    legendOptions{fnum} = {'x','Sex'};
-    donut{fnum} = false; 
-
-    %% CD1 Intake, Acquirers
-    fnum = 13;
-    figNames{fnum} = fullfile(figFold,[dt, '_IntakeCD1Acquire']);
-    subset = {{'Strain', {'CD1'}} ...
-              {'Acquire', {'Acquire'}} ...
-              };
-    subInds{fnum} = getSubInds(mT, subset);
-    yVars{fnum} = 'Intake';
-    yLabs{fnum} = 'Fentanyl Intake (ug/kg)';
-    grammOptions{fnum} = {'color',mT.Sex};        
-    orderOptions{fnum} = {'color',{'Female','Male'}};
-    legendOptions{fnum} = {'x','Sex'};
-    donut{fnum} = false; 
-    
-
-    % %%
-    % fnum = 14;
-    % figNames{fnum} = fullfile(figFold,[dt, '_Weight_C57_AM']);
-    % subset = {{'Strain', {'c57'}} ...
-    %           {'TimeOfBehavior', {'Morning'}} ...
-    %           };
-    % subInds{fnum} = getSubInds(mT, subset);
-    % yVars{fnum} = 'Weight';
-    % yLabs{fnum} = 'Weight (g)';
-    % grammOptions{fnum} = {'color', mT.Chamber, 'lightness', mT.Sex};        
-    % orderOptions{fnum} = {'lightness',{'Female','Male'}};
-    % legendOptions{fnum} = {'x','Sex'};
-    % donut{fnum} = false; 
-
-
-    % %%
-    % fnum = 15;
-    % figNames{fnum} = fullfile(figFold,[dt, '_Weight_CD1_AM']);
-    % subset = {{'Strain', {'CD1'}} ...
-    %           {'TimeOfBehavior', {'Morning'}} ...
-    %           };
-    % subInds{fnum} = getSubInds(mT, subset);
-    % yVars{fnum} = 'Weight';
-    % yLabs{fnum} = 'Weight (g)';
-    % grammOptions{fnum} = {'color', mT.Chamber, 'lightness', mT.Sex};        
-    % orderOptions{fnum} = {'lightness',{'Female','Male'}};
-    % legendOptions{fnum} = {'x','Sex'};
-    % donut{fnum} = false; 
-
-    % %%
-    % fnum = 16;
-    % figNames{fnum} = fullfile(figFold,[dt, '_Weight_C57_PM']);
-    % subset = {{'Strain', {'c57'}} ...
-    %           {'TimeOfBehavior', {'Afternoon'}} ...
-    %           };
-    % subInds{fnum} = getSubInds(mT, subset);
-    % yVars{fnum} = 'Weight';
-    % yLabs{fnum} = 'Weight (g)';
-    % grammOptions{fnum} = {'color', mT.Chamber, 'lightness', mT.Sex};        
-    % orderOptions{fnum} = {'lightness',{'Female','Male'}};
-    % legendOptions{fnum} = {'x','Sex'};
-    % donut{fnum} = false; 
-    % 
-    % %%
-    % fnum = 17;
-    % figNames{fnum} = fullfile(figFold,[dt, '_Weight_CD1_PM']);
-    % subset = {{'Strain', {'CD1'}} ...
-    %           {'TimeOfBehavior', {'Afternoon'}} ...
-    %           };
-    % subInds{fnum} = getSubInds(mT, subset);
-    % yVars{fnum} = 'Weight';
-    % yLabs{fnum} = 'Weight (g)';
-    % grammOptions{fnum} = {'color', mT.Chamber, 'lightness', mT.Sex};        
-    % orderOptions{fnum} = {'lightness',{'Female','Male'}};
-    % legendOptions{fnum} = {'x','Sex'};
-    % donut{fnum} = false; 
-
-    %% plotting loop
-    
-    for y = 1:length(yVars)
-        if ~isempty(subInds{y})
-            plotPubFig(mT, runType, yVars{y}, yLabs{y}, subInds{y}, titles, figNames{y}, figType, donut{y}, ...
-                        'GrammOptions', grammOptions{y}, 'ColorOptions', colorOptions, ...
-                        'OrderOptions', orderOptions{y}, 'LegendOptions', legendOptions{y});
+    for rt = 1:length(runType)
+        expStr = char(string(runType(rt)));
+        
+        pT = mT(dex.(string(expStr)),:);
+        if runType(rt) == 'ER'
+            titles = {'Self-Administration', 'Days 13-15', 'Extinction', 'Reinstatement'}; % titles of subplots 1-4 for each figure
+        elseif runType(rt) == 'BE'
+            titles = {'Self-Administration', 'Days 13-15', 'Behavioral Economics', 'Retraining'};
+        elseif runType(rt) == 'SA'
+            titles = {'Self-Administration', 'Days 13-15'};
         end
+        colorOptions = {'hue_range',[90 450],'lightness_range',[85 35],'chroma_range',[30 70]};
+        figType = '.png'; % image save type
+        
+        %% Active Lever
+        fnum = 1;
+        figNames{fnum} = fullfile(figFold,[expStr, '_ActiveLeverAcquire']);
+        subset = {{'Acquire', {'Acquire'}}};
+        subInds{fnum} = getSubInds(pT, subset);
+        yVars{fnum} = 'ActiveLever';
+        yLabs{fnum} = 'Active Lever';
+        grammOptions{fnum} = {'color', pT.Sex, 'lightness', pT.Strain};        
+        orderOptions{fnum} = {'color', {'Female','Male'}, 'lightness', {'c57', 'CD1'}};
+        legendOptions{fnum} = {'x','Sex'};
+        donut{fnum} = false; 
+    
+    
+        %% C57 Active Lever, Acquirers
+        fnum = 2;
+        figNames{fnum} = fullfile(figFold,[expStr, '_ActiveLeverC57Acquire']);
+        subset = {{'Strain', {'c57'}} ...
+                  {'Acquire', {'Acquire'}} ...
+                  };
+        subInds{fnum} = getSubInds(pT, subset);
+        yVars{fnum} = 'ActiveLever';
+        yLabs{fnum} = 'Active Lever';
+        grammOptions{fnum} = {'color',pT.Sex};        
+        orderOptions{fnum} = {'color',{'Female','Male'}};
+        legendOptions{fnum} = {'x','Sex'};
+        donut{fnum} = false; 
+    
+        %% CD1 Active Lever, Acquirers
+        fnum = 3;
+        figNames{fnum} = fullfile(figFold,[expStr, '_ActiveLeverCD1Acquire']);
+        subset = {{'Strain', {'CD1'}} ...
+                  {'Acquire', {'Acquire'}} ...
+                  };
+        subInds{fnum} = getSubInds(pT, subset);
+        yVars{fnum} = 'ActiveLever';
+        yLabs{fnum} = 'Active Lever';
+        grammOptions{fnum} = {'color',pT.Sex};        
+        orderOptions{fnum} = {'color',{'Female','Male'}};
+        legendOptions{fnum} = {'x','Sex'};
+        donut{fnum} = false; 
+    
+        %% C57 Active Lever
+        % SS note: Bar graph axes being set weird compared to the rest, why? 
+        fnum = 4;
+        figNames{fnum} = fullfile(figFold,[expStr, '_ActiveLeverC57']);
+        subset = {{'Strain', {'c57'}}};
+        subInds{fnum} = getSubInds(pT, subset);
+        yVars{fnum} = 'ActiveLever';
+        yLabs{fnum} = 'Active Lever';
+        grammOptions{fnum} = {'color',pT.Sex, 'lightness',pT.Acquire};        
+        orderOptions{fnum} = {'color',{'Female','Male'}, 'lightness',{'NonAcquire','Acquire'}};
+        legendOptions{fnum} = {'x','Sex'};
+        donut{fnum} = true; 
+    
+        %% CD1 Active Lever
+        % SS note: Bar graph axes being set weird compared to the rest, why?
+        fnum = 5;
+        figNames{fnum} = fullfile(figFold,[expStr, '_ActiveLeverCD1']);
+        subset = {{'Strain', {'CD1'}}};
+        subInds{fnum} = getSubInds(pT, subset);
+        yVars{fnum} = 'ActiveLever';
+        yLabs{fnum} = 'Active Lever';
+        grammOptions{fnum} = {'color',pT.Sex, 'lightness',pT.Acquire};        
+        orderOptions{fnum} = {'color',{'Female','Male'}, 'lightness',{'NonAcquire','Acquire'}};
+        legendOptions{fnum} = {'x','Sex'};
+        donut{fnum} = true; 
+    
+        %% C57 Inactive Lever
+        % SS note: Bar graph axes being set weird compared to the rest, why?
+        fnum = 6; 
+        figNames{fnum} = fullfile(figFold,[expStr, '_InactiveLeverC57']);
+        subset = {{'Strain', {'c57'}}};
+        subInds{fnum} = getSubInds(pT, subset);
+        yVars{fnum} = 'InactiveLever';
+        yLabs{fnum} = 'Inactive Lever';
+        grammOptions{fnum} = {'color',pT.Sex, 'lightness',pT.Acquire};        
+        orderOptions{fnum} = {'color',{'Female','Male'}, 'lightness',{'NonAcquire','Acquire'}};
+        legendOptions{fnum} = {'x','Sex'};
+        donut{fnum} = false; 
+    
+        %% CD1 Inactive Lever
+        % SS note: Bar graph axes being set weird compared to the rest, why?
+        fnum = 7;
+        figNames{fnum} = fullfile(figFold,[expStr, '_InactiveLeverCD1']);
+        subset = {{'Strain', {'CD1'}}};
+        subInds{fnum} = getSubInds(pT, subset);
+        yVars{fnum} = 'InactiveLever';
+        yLabs{fnum} = 'Inactive Lever';
+        grammOptions{fnum} = {'color',pT.Sex, 'lightness',pT.Acquire};        
+        orderOptions{fnum} = {'color',{'Female','Male'}, 'lightness',{'NonAcquire','Acquire'}};
+        legendOptions{fnum} = {'x','Sex'};
+        donut{fnum} = false; 
+    
+        %% C57 Head Entries, Acquirers
+        fnum = 8;
+        figNames{fnum} = fullfile(figFold,[expStr, '_HeadEntriesC57Acquire']);
+        subset = {{'Strain', {'c57'}} ...
+                  {'Acquire', {'Acquire'}} ...
+                  };
+        subInds{fnum} = getSubInds(pT, subset);
+        yVars{fnum} = 'HeadEntries';
+        yLabs{fnum} = 'Head Entries';
+        grammOptions{fnum} = {'color',pT.Sex};        
+        orderOptions{fnum} = {'color',{'Female','Male'}};
+        legendOptions{fnum} = {'x','Sex'};
+        donut{fnum} = false; 
+    
+        %% CD1 HeadEntries, Acquirers
+        fnum = 9;
+        figNames{fnum} = fullfile(figFold,[expStr, '_HeadEntriesLeverCD1Acquire']);
+        subset = {{'Strain', {'CD1'}} ...
+                  {'Acquire', {'Acquire'}} ...
+                  };
+        subInds{fnum} = getSubInds(pT, subset);
+        yVars{fnum} = 'HeadEntries';
+        yLabs{fnum} = 'Head Entries';
+        grammOptions{fnum} = {'color',pT.Sex};        
+        orderOptions{fnum} = {'color',{'Female','Male'}};
+        legendOptions{fnum} = {'x','Sex'};
+        donut{fnum} = false; 
+    
+        %% C57 Latency, Acquirers
+        fnum = 10;
+        figNames{fnum} = fullfile(figFold,[expStr, '_LatencyC57Acquire']);
+        subset = {{'Strain', {'c57'}} ...
+                  {'Acquire', {'Acquire'}} ...
+                  };
+        subInds{fnum} = getSubInds(pT, subset);
+        yVars{fnum} = 'HeadEntries';
+        yVars{fnum} = 'Latency';
+        yLabs{fnum} = 'Head Entry Latency';
+        grammOptions{fnum} = {'color',pT.Sex};        
+        orderOptions{fnum} = {'color',{'Female','Male'}};
+        legendOptions{fnum} = {'x','Sex'};
+        donut{fnum} = false; 
+    
+        %% CD1 Latency, Acquirers
+        fnum = 11;
+        figNames{fnum} = fullfile(figFold,[expStr, '_LatencyCD1Acquire']);
+        subset = {{'Strain', {'CD1'}} ...
+                  {'Acquire', {'Acquire'}} ...
+                  };
+        subInds{fnum} = getSubInds(pT, subset);
+        yVars{fnum} = 'Latency';
+        yLabs{fnum} = 'Head Entry Latency';
+        grammOptions{fnum} = {'color',pT.Sex};        
+        orderOptions{fnum} = {'color',{'Female','Male'}};
+        legendOptions{fnum} = {'x','Sex'};
+        donut{fnum} = false; 
+    
+        %% C57 Intake, Acquirers
+        fnum = 12;
+        figNames{fnum} = fullfile(figFold,[expStr, '_IntakeC57Acquire']);
+        subset = {{'Strain', {'c57'}} ...
+                  {'Acquire', {'Acquire'}} ...
+                  };
+        subInds{fnum} = getSubInds(pT, subset);
+        yVars{fnum} = 'Intake';
+        yLabs{fnum} = 'Fentanyl Intake (ug/kg)';
+        grammOptions{fnum} = {'color',pT.Sex};        
+        orderOptions{fnum} = {'color',{'Female','Male'}};
+        legendOptions{fnum} = {'x','Sex'};
+        donut{fnum} = false; 
+    
+        %% CD1 Intake, Acquirers
+        fnum = 13;
+        figNames{fnum} = fullfile(figFold,[expStr, '_IntakeCD1Acquire']);
+        subset = {{'Strain', {'CD1'}} ...
+                  {'Acquire', {'Acquire'}} ...
+                  };
+        subInds{fnum} = getSubInds(pT, subset);
+        yVars{fnum} = 'Intake';
+        yLabs{fnum} = 'Fentanyl Intake (ug/kg)';
+        grammOptions{fnum} = {'color',pT.Sex};        
+        orderOptions{fnum} = {'color',{'Female','Male'}};
+        legendOptions{fnum} = {'x','Sex'};
+        donut{fnum} = false; 
+        
+    
+        % %%
+        % fnum = 14;
+        % figNames{fnum} = fullfile(figFold,[expStr, '_Weight_C57_AM']);
+        % subset = {{'Strain', {'c57'}} ...
+        %           {'TimeOfBehavior', {'Morning'}} ...
+        %           };
+        % subInds{fnum} = getSubInds(pT, subset);
+        % yVars{fnum} = 'Weight';
+        % yLabs{fnum} = 'Weight (g)';
+        % grammOptions{fnum} = {'color', pT.Chamber, 'lightness', pT.Sex};        
+        % orderOptions{fnum} = {'lightness',{'Female','Male'}};
+        % legendOptions{fnum} = {'x','Sex'};
+        % donut{fnum} = false; 
+    
+    
+        % %%
+        % fnum = 15;
+        % figNames{fnum} = fullfile(figFold,[expStr, '_Weight_CD1_AM']);
+        % subset = {{'Strain', {'CD1'}} ...
+        %           {'TimeOfBehavior', {'Morning'}} ...
+        %           };
+        % subInds{fnum} = getSubInds(pT, subset);
+        % yVars{fnum} = 'Weight';
+        % yLabs{fnum} = 'Weight (g)';
+        % grammOptions{fnum} = {'color', pT.Chamber, 'lightness', pT.Sex};        
+        % orderOptions{fnum} = {'lightness',{'Female','Male'}};
+        % legendOptions{fnum} = {'x','Sex'};
+        % donut{fnum} = false; 
+    
+        % %%
+        % fnum = 16;
+        % figNames{fnum} = fullfile(figFold,[expStr, '_Weight_C57_PM']);
+        % subset = {{'Strain', {'c57'}} ...
+        %           {'TimeOfBehavior', {'Afternoon'}} ...
+        %           };
+        % subInds{fnum} = getSubInds(pT, subset);
+        % yVars{fnum} = 'Weight';
+        % yLabs{fnum} = 'Weight (g)';
+        % grammOptions{fnum} = {'color', pT.Chamber, 'lightness', pT.Sex};        
+        % orderOptions{fnum} = {'lightness',{'Female','Male'}};
+        % legendOptions{fnum} = {'x','Sex'};
+        % donut{fnum} = false; 
+        % 
+        % %%
+        % fnum = 17;
+        % figNames{fnum} = fullfile(figFold,[expStr, '_Weight_CD1_PM']);
+        % subset = {{'Strain', {'CD1'}} ...
+        %           {'TimeOfBehavior', {'Afternoon'}} ...
+        %           };
+        % subInds{fnum} = getSubInds(pT, subset);
+        % yVars{fnum} = 'Weight';
+        % yLabs{fnum} = 'Weight (g)';
+        % grammOptions{fnum} = {'color', pT.Chamber, 'lightness', pT.Sex};        
+        % orderOptions{fnum} = {'lightness',{'Female','Male'}};
+        % legendOptions{fnum} = {'x','Sex'};
+        % donut{fnum} = false; 
+    
+        %% plotting loop
+        
+        for y = 1:length(yVars)
+            if ~isempty(subInds{y})
+                plotPubFig(pT, expStr, yVars{y}, yLabs{y}, subInds{y}, titles, figNames{y}, figType, donut{y}, ...
+                            'GrammOptions', grammOptions{y}, 'ColorOptions', colorOptions, ...
+                            'OrderOptions', orderOptions{y}, 'LegendOptions', legendOptions{y});
+            end
+        end
+    
     end
-
 end
 
 %%
-function [g] = plotPubFig(mT, runType, yVar, yLab, subInd, titles, figName, figType, donut, varargin)
+function [g] = plotPubFig(pT, runType, yVar, yLab, subInd, titles, figName, figType, donut, varargin)
     % try
         % why am I parsing it this way? this is dumb    
         p = inputParser;
@@ -276,20 +280,20 @@ function [g] = plotPubFig(mT, runType, yVar, yLab, subInd, titles, figName, figT
         parse(p, varargin{:});
         
         if runType == 'ER'
-            sp_subInd = {subInd & (mT.sessionType=='PreTraining' | mT.sessionType=='Training'), ...
-                         subInd & (mT.sessionType=='PreTraining' | mT.sessionType=='Training') & mT.Session>12, ...
-                         subInd & (mT.sessionType=='Extinction'), ...
-                         subInd & mT.sessionType=='Reinstatement'};
+            sp_subInd = {subInd & (pT.sessionType=='PreTraining' | pT.sessionType=='Training'), ...
+                         subInd & (pT.sessionType=='PreTraining' | pT.sessionType=='Training') & pT.Session>12, ...
+                         subInd & (pT.sessionType=='Extinction'), ...
+                         subInd & pT.sessionType=='Reinstatement'};
             xLim = {[0, 15.5], [0.5 2.5], [15.5 25.5], [0.5 2.5]};
         elseif runType == 'BE'
-            sp_subInd = {subInd & (mT.sessionType=='PreTraining' | mT.sessionType=='Training'), ...
-                         subInd & (mT.sessionType=='PreTraining' | mT.sessionType=='Training') & mT.Session>12, ...
-                         subInd & (mT.sessionType=='BehavioralEconomics'), ...
-                         subInd & (mT.sessionType=='ReTraining')};
+            sp_subInd = {subInd & (pT.sessionType=='PreTraining' | pT.sessionType=='Training'), ...
+                         subInd & (pT.sessionType=='PreTraining' | pT.sessionType=='Training') & pT.Session>12, ...
+                         subInd & (pT.sessionType=='BehavioralEconomics'), ...
+                         subInd & (pT.sessionType=='ReTraining')};
             xLim = {[0, 15.5], [0.5 2.5], [15.5 20.5], [0.5 2.5]};
         elseif runType == 'SA'
-            sp_subInd = {subInd & (mT.sessionType=='PreTraining' | mT.sessionType=='Training'), ...
-                         subInd & (mT.sessionType=='PreTraining' | mT.sessionType=='Training') & mT.Session>12};
+            sp_subInd = {subInd & (pT.sessionType=='PreTraining' | pT.sessionType=='Training'), ...
+                         subInd & (pT.sessionType=='PreTraining' | pT.sessionType=='Training') & pT.Session>12};
             xLim = {[0, 15.5], [0.5 2.5]};
         end
     
@@ -302,13 +306,13 @@ function [g] = plotPubFig(mT, runType, yVar, yLab, subInd, titles, figName, figT
         yMax = 0;
         for sp = 1:length(sp_subInd)        
             if mod(sp,2) == 1
-                g(1,sp)=gramm('x',mT.Session,'y',mT.(yVar),'subset', sp_subInd{sp}, p.Results.GrammOptions{:});
+                g(1,sp)=gramm('x',pT.Session,'y',pT.(yVar),'subset', sp_subInd{sp}, p.Results.GrammOptions{:});
                 g(1,sp).stat_summary(stat_set{1}{:});
                 g(1,sp).set_point_options('markers',{'o','s'}, point_set{1}{:});  
                 g(1,sp).set_names('x','Session','y', yLab,'color','Sex');
                 g(1,sp).no_legend;
             elseif mod(sp,2) == 0
-                g(1,sp)=gramm('x', mT.Sex,'y', mT.(yVar), 'subset', sp_subInd{sp}, p.Results.GrammOptions{:});
+                g(1,sp)=gramm('x', pT.Sex,'y', pT.(yVar), 'subset', sp_subInd{sp}, p.Results.GrammOptions{:});
                 g(1,sp).stat_summary(stat_set{2}{:});
                 g(1,sp).set_point_options('markers',{'o','s'}, point_set{2}{:});
                 g(1,sp).geom_jitter('alpha',.6,'dodge',1.75,'width',0.05);
@@ -375,9 +379,9 @@ function [g] = plotPubFig(mT, runType, yVar, yLab, subInd, titles, figName, figT
             pos6=g(1,3).title_axe_handle.OuterPosition;
             set(g(1,3).title_axe_handle,'OuterPosition',[pos6(1)+.01,pos6(2),pos4(3),pos4(4)]); 
             % Axes Limits
-            if strcmp(runType, 'ER')
+            if runType == 'ER'
                 set(g(1,3).facet_axes_handles,'YLim',[0 yMax],'XLim',[15 25.5],'XTick',[16 20 25],'XTickLabel',{'1','5','10'});
-            elseif strcmp(runType, 'BE')
+            elseif runType == 'BE'
                 set(g(1,3).facet_axes_handles,'YLim',[0 yMax],'XLim',[15 20.5],'XTick',[16 18 20],'XTickLabel',{'1','3','5'});
             end
             set(g(1,4).facet_axes_handles,'YLim',[0 yMax],'XTickLabel',{char(9792),char(9794)});
@@ -387,16 +391,16 @@ function [g] = plotPubFig(mT, runType, yVar, yLab, subInd, titles, figName, figT
         exportgraphics(f1,[figName, figType],'ContentType','vector');
     
         if donut
-            plotDonut(mT, subInd, g, figName, figType)
+            plotDonut(pT, subInd, g, figName, figType)
         end
     % catch
         % disp('oh no! had to skip a figure, wonder why??')
     % end    
 end
     
-function plotDonut(mT, subInd, g, figName, figType)
+function plotDonut(pT, subInd, g, figName, figType)
     % Donut Chart for Overlay
-        groupStats = grpstats(mT(mT.Session==1 & subInd, :),["Sex","Strain","Acquire"],["mean","sem"],"DataVars",'ActiveLever');
+        groupStats = grpstats(pT(pT.Session==1 & subInd, :),["Sex","Strain","Acquire"],["mean","sem"],"DataVars",'ActiveLever');
         % groupStats = sortrows(groupStats,"Acquire",'descend');
         f2=figure('Position',[1 300 575 575]);
         d=donutchart(groupStats.GroupCount, strrep(groupStats.Properties.RowNames, '_', ' '));

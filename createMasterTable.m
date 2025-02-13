@@ -1,4 +1,6 @@
 function [mT] = createMasterTable(main_folder, beh_datapath, masterKey_flnm, experimentKey_flnm)
+    showWarnings = false;
+    
     % Import Master Key
     addpath(genpath(main_folder))
     opts = detectImportOptions(masterKey_flnm);
@@ -7,7 +9,8 @@ function [mT] = createMasterTable(main_folder, beh_datapath, masterKey_flnm, exp
     
     % Import Experiment Key
     expKey = readtable(experimentKey_flnm);
-    % annoying formatting problems pulling dates from sheet
+
+    % Deal with annoying formatting problems with dates from sheet
     keyDate = expKey.Date;
     temp = cell([height(expKey), 1]);
     for kd = 1:length(keyDate)
@@ -39,39 +42,63 @@ function [mT] = createMasterTable(main_folder, beh_datapath, masterKey_flnm, exp
                 % Calculate Variables Using Raw Data
                 [varTable] = rawVariableExtractor(varTable, eventCode, eventTime);
                
-                % Add experiment type, session type, fentanyl concentration, and intake
+                % Find this animal's index in mKey
                 tag = varTable.TagNumber(height(varTable));
                 mKey_ind = find(mKey.TagNumber==tag);
                 
+                % Get experiment type from logical indexing in mKey
                 if mKey.Extinction(mKey_ind) && mKey.Reinstatement(mKey_ind) && ~mKey.BehavioralEconomics(mKey_ind)
-                    expType = 'ER';
-                elseif mKey.BehavioralEconomics(mKey_ind) % don't exclude extinction and reinstatement so we can keep the BE data from run 2
-                    expType = 'BE';
+                    Experiment = categorical("ER");
+                elseif mKey.BehavioralEconomics(mKey_ind) % don't exclude based on indication of extinction and reinstatement in mKey so we can keep the BE data from run 2
+                    Experiment = categorical("BE");
                 else
-                    expType = 'undefined';
+                    Experiment = categorical("undefined");
                 end
-
+                
+                % Get session type, fentanyl concentration, and intake from expKey
                 fl_date = varTable.Date(height(varTable));
-                expKey_ind = find(strcmp(expKey.Date, string(fl_date)) & strcmp(expKey.Experiment,expType)); % both cases necessary for when multiple experiments are run on the same day (run 4)
+                expKey_ind = find(strcmp(expKey.Date, string(fl_date)) & strcmp(expKey.Experiment,string(Experiment))); % both cases necessary for when multiple experiments are run on the same day (run 4)
+                
+                
                 if isempty(expKey_ind) | length(expKey_ind) > 1
-                    disp(['cannot add session type or intake data for ', fullfile(Files(i).folder, Files(i).name)])
-                    
+                    % Code's only set up for 'BE' and 'ER' experiments (w/ ability to section out the 'SA' sessions) 
+                    % Call anything else undefined
+                    if showWarnings
+                        disp(['cannot add session type or intake data for ', fullfile(Files(i).folder, Files(i).name)])
+                    end
                     Intake = NaN;
                     totalIntake = NaN;
                     Concentration = NaN;
                     DoseVolume = NaN;
-                    sessionType = NaN;
+                    Run = NaN;
+                    sessionType = categorical("undefined");
                 else
+                    % Read concentration & dose volume per dose from Experiment Key to calculate drug intake
                     Concentration = expKey.FentanylConcentration_ug_ml_(expKey_ind);
                     DoseVolume = expKey.VolumePerDose_mL_(expKey_ind);
                     Intake = DoseVolume * Concentration * varTable.EarnedInfusions(height(varTable));
                     totalIntake = DoseVolume * Concentration * varTable.TotalInfusions(height(varTable));
-                    sessionType = expKey.SessionType(expKey_ind);
+                    Run = expKey.Run(expKey_ind);
+                    sessionType = categorical(string(expKey.SessionType{expKey_ind}));
                 end
-                drugIntakeTab = table(sessionType,Concentration, DoseVolume, Intake, totalIntake);
 
-                % Concatonate the Master Table
-                mT=[mT; [varTable, drugIntakeTab]];
+                % Special case latency calc for Extinction trials
+                if sessionType == 'Extinction'
+                    EC = varTable.eventCode{1};
+                    ET = varTable.eventTime{1};
+                    actLP = ET(EC==22);
+                    HE = ET(EC==95);
+                    seekHE = arrayfun(@(x) find(HE > x, 1, 'first'), actLP, 'UniformOutput', false);
+                    seekHE = HE(unique(cell2mat(seekHE(~cellfun(@isempty, seekHE)))));
+                    seekLP = arrayfun(@(x) find(actLP < x, 1, 'last'), seekHE, 'UniformOutput', false);
+                    seekLP = actLP(unique(cell2mat(seekLP(~cellfun(@isempty, seekLP)))));
+                    varTable.allLatency = {seekHE-seekLP};
+                    varTable.Latency = mean(varTable.allLatency{1});
+                end
+                
+                % Concatenate the Master Table
+                drugIntakeTab = table(sessionType, Experiment, Run, Concentration, DoseVolume, Intake, totalIntake);
+                mT = [mT; [varTable, drugIntakeTab]];
             end
         end
         close(wb)
@@ -81,6 +108,5 @@ function [mT] = createMasterTable(main_folder, beh_datapath, masterKey_flnm, exp
     mT=innerjoin(mT,mKey,'Keys',{'TagNumber'},'RightVariables',{'Sex','Strain','TimeOfBehavior','Chamber'});
     
     %%
-    dt = date;
-    save([dt, '_masterTable'],'mT');
+    save('data_masterTable','mT');
 end

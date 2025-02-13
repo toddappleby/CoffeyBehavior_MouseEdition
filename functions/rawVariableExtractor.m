@@ -22,6 +22,8 @@ function [varTable] = rawVariableExtractor(varTable, eventCode, eventTime)
 %    97 rewarded lever presses (includes lever presses not followed by a head entry before the next reward)
 %    98 rewarded head entries following active lever presses
 %    99 rewarded head entries (includes head entries following human-given reward + cue)
+    
+    showWarnings = false;
 
     % Change Subject to TagNumber to Match the Key
     varTable.Properties.VariableNames{'Subject'} = 'TagNumber';
@@ -49,7 +51,7 @@ function [varTable] = rawVariableExtractor(varTable, eventCode, eventTime)
     time_rewHE = unique(nextHE, 'stable'); % Ensure uniqueness
     varTable.rewardedHeadEntries = length(time_rewHE);
 
-    time_rewLP = eventTime(eventCode==3 | eventCode == 4);
+    time_rewLP = eventTime(eventCode == 3 | eventCode == 4);
     % filter out rewarded lever presses not followed by head entries and
     % rewarded head entries not preceded by active lever presses (freebies)
     time_rewLP_preceding_HE = arrayfun(@(x) time_rewLP(find(time_rewLP < x, 1, 'last')), time_rewHE, 'UniformOutput', false);
@@ -68,17 +70,13 @@ function [varTable] = rawVariableExtractor(varTable, eventCode, eventTime)
     varTable.doseHE = {doseHE};
 
     % calculate earned and total infusions 
-    if varTable.Session == 26 % SSnote: maybe this get's move to createNewMasterTable too
-        varTable.EarnedInfusions = NaN;
+    if varTable.Session == 26 % SSnote: maybe this get's moved to createNewMasterTable too
+        varTable.EarnedInfusions = 0;
     elseif varTable.TotalInfusions == 0
         varTable.EarnedInfusions = 0;
     else
         varTable.EarnedInfusions = length(time_rewLP);
     end
-
-    % SSnote: moved createMasterTable to get it from the experiment table. It used to be hardcoded this way. 
-    % varTable.Intake=(varTable.EarnedInfusions*1.575)/(varTable.Weight/1000); % 1.575ug/dose*infusions / weight in kg = (ug/kg)
-    % varTable.totalIntake=(varTable.TotalInfusions*1.575)/(varTable.Weight/1000);
     
     % SSnote: move slideSession to main script or createMasterTable to generalize it and get it from the experiment table
     % slideSession - Slide Days for looks
@@ -96,20 +94,24 @@ function [varTable] = rawVariableExtractor(varTable, eventCode, eventTime)
     varTable.allLatency = {time_HE_following_rewLP - time_rewLP_preceding_HE};
     varTable.Latency = mean(varTable.allLatency{1});
     varTable.Latency(isempty(varTable.allLatency{1})) = NaN;
+
+    % if (varTable.Session > 15) && (varTable.Session <=26)
+    %     disp('bleh');
+    % end
     
     % get number of active and inactive lever presses that occur during ITI
     % SSnote: these are encoded as 20 and 21, don't need to calc them 
-    varTable.itiActiveLever=varTable.ActiveLever-varTable.EarnedInfusions;
+    varTable.itiActiveLever= varTable.ActiveLever - varTable.EarnedInfusions;
     inLP=eventTime(eventCode==23);% 23  = Inactive Lev press
     % SS hack for absent inactive lever event codes in some sessions...
-    % HARDCODED TO READ RIGHT LEVER AS INACTIVE LEVER
     if isempty(inLP)
-        inLP = eventTime(eventCode==1);
-        if ~isempty(inLP)
-            disp(['logged right lever presses as inactive lever presses for ID:', char(varTable.TagNumber), ' on ', char(varTable.Date)])
-            disp(' ')
-        else
-            disp(['no inactive lever presses found for ID:', char(varTable.TagNumber), ' on ', char(varTable.Date)])
+        inLP = eventTime(eventCode==1); % HARDCODED TO READ RIGHT LEVER AS INACTIVE LEVER
+        if showWarnings
+            if ~isempty(inLP)
+                disp(['logged right lever presses as inactive lever presses for ID:', char(varTable.TagNumber), ' on ', char(varTable.Date)])
+            else
+                disp(['no inactive lever presses found for ID:', char(varTable.TagNumber), ' on ', char(varTable.Date)])
+            end
         end
     end
     inITI=[]; % Initialize in case there are no inLPs during ITI   

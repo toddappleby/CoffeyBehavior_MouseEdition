@@ -1,0 +1,54 @@
+function saveTableHDF5(tab, savepath)
+
+    % Delete existing file to avoid conflicts
+    if isfile(savepath)
+        delete(savepath);
+    end
+    
+    % Create an empty HDF5 file before the loop
+    fid = H5F.create(savepath);
+    H5F.close(fid);
+    
+    % Loop through each column, creating groups and writing datasets
+    for i = 1:width(tab)
+        % Get column name and data
+        varname = tab.Properties.VariableNames{i}; % Get column name
+        data = tab{:, i}; % Extract column data
+        group_path = ['/' varname]; % Create group path
+        data = tab.(varname);
+        disp(varname)
+        % Get datatype for the hdf5 dataset, update the current data type
+        % and/or shape as necessary
+        if isnumeric(data) % Numeric column
+            datatype = "double";
+        elseif iscategorical(data) || isstring(data) || isdatetime(data)
+            data = string(data);
+            datatype = "string";
+        elseif iscell(data) && all(cellfun(@isnumeric, data)) % Column with numeric arrays
+            max_len = max(cellfun(@numel, data)); % Find max array length
+            padded_data = NaN(height(tab), max_len); % Pad shorter arrays with NaNs
+            
+            for j = 1:height(tab)
+                len = numel(data{j});
+                padded_data(j, 1:len) = data{j}; % Fill matrix
+            end
+            data = padded_data;
+            datatype = "double";
+        elseif iscell(data) && all(cellfun(@ischar, data)) % Column with numeric arrays
+            str_array = strings(size(data));
+            for j = 1:height(tab)
+                str_array(j) = string(data{j}); % Fill matrix
+            end
+            data = str_array;
+            datatype = "double";
+        else
+            disp(['saveTableHDF5 is not equipped to handle datatype of column "', varname, '", skipping...'])
+            continue
+        end
+    
+        % Create the group for this column
+        h5create(savepath, group_path, size(data), 'Datatype', datatype);
+        h5write(savepath, group_path, data);
+    end
+    disp('HDF5 file saved successfully!');
+end

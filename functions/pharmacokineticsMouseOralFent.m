@@ -18,7 +18,7 @@ function [ druglevel, time] = pharmacokineticsMouseOralFent(varargin)
 p=inputParser;
 addParameter(p,'infusions',[]); % [ms_inf_onset,ms_inf_offset]
 addParameter(p,'type',[]); % Session type [1 2 3 4 5]
-addParameter(p,'duration',[]); % Session duratin in seconds
+addParameter(p,'duration',[]); % Session duration in seconds
 addParameter(p,'weight', []); % Rat weight in grams
 addParameter(p,'makeFig',1);
 addParameter(p,'mg_mL', []); % Fentanyl concentration (mg/mL)
