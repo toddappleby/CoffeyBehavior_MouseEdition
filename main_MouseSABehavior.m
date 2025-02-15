@@ -232,52 +232,203 @@ if individualSusceptibility_analysis
     % data through for metric calcs and correlations, this current way is
     % dumb and involves a ton of redundancy
     % SSnote: Currently missing first hour
+    [ivT] = GetMetrics(mT(dex.all, :));
 
-    if any(ismember(runType, 'ER'))
-        subsets = {mT(dex.ER, :), ...
-                   mT(intersect(dex.ER, find(mT.Strain == 'c57')), :), ...
-                   mT(intersect(dex.ER, find(mT.Strain == 'CD1')), :), ...
-                   mT(intersect(dex.ER, find((mT.Strain == 'c57') & (mT.Sex == 'Male'))), :), ...
-                   mT(intersect(dex.ER, find((mT.Strain == 'c57') & (mT.Sex == 'Female'))), :), ...
-                   mT(intersect(dex.ER, find((mT.Strain == 'CD1') & (mT.Sex == 'Male'))), :), ...
-                   mT(intersect(dex.ER, find((mT.Strain == 'CD1') & (mT.Sex == 'Female'))), :)};
-        includeER = [true, true, true, true, true, true, true];
-        suff = {'_incl_ER', '_incl_ER_C57', '_incl_ER_CD1', '_incl_ER_C57Male','_incl_ER_C57Female','_incl_ER_CD1Male','_incl_ER_CD1Female',};
-
-        for sub = 1:length(subsets)
-            [ivT, ivZT, correlations] = IndividualSusceptibility(subsets{sub}, includeER(sub));
-            if groupIntakefigs_savepath
-                IndividualSusceptibility_figures(ivT, ivZT, correlations, includeER(sub), groupIntakefigs_savepath, suff{sub});
-            end
-            if saveTabs
-                save([sub_dir, tabs_savepath, 'IndividualVariability', suff{sub}, '.mat'], 'ivT', 'ivZT', 'correlations');
-            end
-        end
+    if saveTabs
+        save([sub_dir, tabs_savepath, 'IndividualVariabilityMetrics', '.mat'], 'ivT');
     end
-    if any(ismember(runType, 'SA') | ismember(runType, 'BE'))
-        mT_all = mT(dex.all, :);
-        [ivT, ivZT, correlations] = IndividualSusceptibility(mT_all, false);
-        if groupIntakefigs_savepath
-            IndividualSusceptibility_figures(ivT, ivZT, correlations, false, groupIntakefigs_savepath, '_nonER');
-        end
+
+    % run Z scores separately for animals that lack ER sessions & associated metrics
+    if ~any(ismember(runType, 'ER'))
+        zGroups = {ones([height(ivT), 1])};
+        includeER = false;
+        z_suff = {'_noER'};
+    elseif (length(runType) > 1) & any(ismember(runType, 'ER'))
+        ER_IDs =  unique(mT.TagNumber(dex.ER));
+        ivT_ER_ind = ismember(unique(mT.TagNumber(dex.all)), ER_IDs);
+        zGroups = {ones([height(ivT), 1]), ivT_ER_ind};
+        includeER = [false, true];
+        z_suff = {'_noER', '_withER'};
+    else % only 'ER' in runType
+        zGroups = {ones([height(ivT), 1])};
+        includeER = true;
+        z_suff = {'_withER'};
+    end
+    
+    % subgroups of z-scored data to run correlatins across
+    corrGroups = {{{'all'}}, ...
+                  {{'Strain', 'c57'}}, ...
+                  {{'Strain', 'CD1'}}, ...
+                  {{'Sex', 'Male'}}, ...
+                  {{'Sex', 'Female'}}, ...
+                  {{'Strain', 'c57'}, {'Sex', 'Male'}}, ...
+                  {{'Strain', 'c57'}, {'Sex', 'Female'}}, ...
+                  {{'Strain', 'CD1'}, {'Sex', 'Male'}}, ...
+                  {{'Strain', 'CD1'}, {'Sex', 'Female'}}}; 
+
+    % violin groups
+    violSubsets = {{'all'}, {'all'}, {'Strain', 'c57'}, {'Strain', 'CD1'}};
+    violGroups = {'Strain', 'Sex', 'Sex', 'Sex'};
+    violLabels = {'Strain', 'Sex', 'c57 Sex', 'CD1 Sex'};
+    
+    for zg = 1:length(zGroups)
+        [ivZT] = SeverityScore(ivT(find(zGroups{zg}),:), includeER(zg));
         if saveTabs
-            save([sub_dir, tabs_savepath, '\IndividualVariability.mat'], 'ivT', 'ivZT', 'correlations');
+            save([sub_dir, tabs_savepath, 'IndividualVariabilityZscores', char(z_suff{zg}), '.mat'], 'ivZT');
+        end
+        %% SSnote: correlation figure is currently getting double the number of tickmarks and labels as it should be in the nonER condition....why
+        [correlations] = GetCorr(ivZT, z_suff{zg}, corrGroups, sub_dir, groupOralFentOutput_figs, groupOralFentOutput_savepath);
+        if groupOralFentOutput_figs     
+            for vg = 1:length(violSubsets)
+                thistab = ivT(find(zGroups{zg}),:);
+                thistab.Severity = ivZT.Severity;
+                subset = ones([height(thistab), 1]);
+                if ~strcmp(violSubsets{vg}{1}, 'all')
+                    subset = subset & (thistab.(violSubsets{vg}{1}) == violSubsets{vg}{2});
+                end
+                ViolinFig(thistab(find(subset), :), violGroups{vg}, [z_suff{zg}, '_', violLabels{vg}], includeER(zg), sub_dir, groupOralFentOutput_savepath)
+            end
+            PCA_fig(ivZT, correlations.([z_suff{zg}(2:end),'_all']).prednames, ...
+                    sub_dir, groupOralFentOutput_savepath, z_suff{zg});
         end
     end
-
 end
 
 
 %% ------------------------FUNCTIONS---------------------------------
 
-function IndividualSusceptibility_figures(ivT, ivZT, correlations, includeER, groupIntakefigs_savepath, suffix)
-    
-    prednames = correlations.prednames;
-    ct = correlations.ct;
+function PCA_fig(ivZT, prednames, sub_dir, subfolder, suffix)
+    [coeff,score,latent] = pca(ivZT{:,prednames});
+    PC1=score(:,1);
+    PC2=score(:,2);
 
-    f=figure('Position',[1 1 700 600]);
-    imagesc(ct,[0 1]); % Display correlation matrix as an image
-    colormap('hot');
+    f1=figure('color','w','position',[100 100 800 650]);
+    h1 = biplot(coeff(:,1:3),'Scores',score(:,1:3),...
+        'Color','b','Marker','o','VarLabels',prednames);
+    % set metric vectors' appearance
+    for i = 1:length(prednames) 
+        h1(i).Color=[.5 .5 .5];    
+        h1(i).LineWidth=1.5;
+        h1(i).LineStyle=':';
+        h1(i).MarkerSize=4;
+        h1(i).MarkerFaceColor=[.0 .0 .0];
+        h1(i).MarkerEdgeColor=[0 .0 0];
+    end
+    % remove extra line objects (not sure why these exist) 
+    for i = length(prednames) + 1 : length(prednames) * 2
+        h1(i).Marker='none';
+    end
+    % format text for metric vector labels
+    for i = 1 + (length(prednames) * 2) : 3 * length(prednames)
+        h1(i).FontSize = 11;
+        h1(i).FontWeight = 'bold';
+    end
+    data_ind1 = length(h1) - height(ivZT);
+    R = rescale(ivZT.Severity,4,18);
+    for i=data_ind1:length(h1)-1
+        h1(i).MarkerEdgeColor=[0 .0 0];
+        h1(i).MarkerSize=R(i-data_ind1 + 1);
+        if ivZT.Sex(i - data_ind1 + 1) == 'Male' % SSnote: the heck is this part for
+            h1(i).MarkerFaceColor = [.46 .51 1];
+        else
+            h1(i).MarkerFaceColor = [.95 .39 .13];
+        end
+        if ivZT.Strain(i - data_ind1 + 1) == 'c57' % SSnote: the heck is this part for
+            h1(i).Marker='o';
+        else
+            h1(i).Marker='s';
+        end
+
+    end
+    pbaspect([1,1,1])
+    set(gca,'LineWidth',1.5,'TickDir','in','FontSize',14);
+    grid off
+    saveas(f1,[sub_dir, subfolder 'PCA_Vectors', suffix]);
+    
+    pcTable = [ivZT, table(PC1, PC2)];
+    f1 = figure('color','w','position',[100 100 800 650]);
+    g = gramm('x', pcTable.PC1, 'y', pcTable.PC2, 'color', pcTable.Sex, 'marker', pcTable.Strain, 'lightness', pcTable.Class);
+    g.set_color_options('hue_range',[50 542.5],'chroma',80,'lightness',60,'n_color',2);
+    g.geom_point();
+    g.set_names('x','PC1','y','PC2','color','Sex', 'marker', 'Strain', 'lightness', 'Class');
+    g.axe_property('FontSize',12,'LineWidth',1.5,'TickDir','out');
+    g.set_order_options('lightness',{'High','Mid','Low'});
+    g.set_point_options('base_size',8);
+    g.draw;
+    for i = 1:height(g.results.geom_point_handle)
+        g.results.geom_point_handle(i)
+       g.results.geom_point_handle(i).MarkerEdgeColor = [0 0 0];
+    end
+    exportgraphics(f1,[sub_dir, subfolder, 'PC1_PC2', suffix, '.png'],'ContentType','vector');
+end
+
+
+function [f] = plotViolins(ivT, yVars, yLabs, group)
+    clear g
+    f = figure('units','normalized','outerposition',[0 0 1 .5]);
+    numDat = length(ivT.Intake); 
+    x = nan([1,numDat]);
+    groupsets = unique(ivT.(group));
+    
+    if length(groupsets) > 1
+        x(ivT.(group) == categorical(groupsets(1))) = .8;
+        x(ivT.(group) == categorical(groupsets(2))) = 1.2; 
+    
+        for y = 1:length(yVars)
+            g(1,y)=gramm('x',x,'y',ivT.(yVars{y}),'color',ivT.(group));
+            g(1,y).set_order_options('color', groupsets)
+            g(1,y).set_color_options('hue_range',[50 542.5],'chroma',80,'lightness',60,'n_color',2);
+            g(1,y).stat_violin('normalization', 'width', 'fill', 'transparent'); %'extra_y', 0, 'half', 1, 
+            g(1,y).geom_jitter('width',.05,'dodge',-.5,'alpha',.75);
+            g(1,y).axe_property('LineWidth',1.5,'FontSize',14,'Font','Helvetica','XLim',[0.5 1.5],'TickDir','out'); %'YLim',[0 1200]
+            g(1,y).set_names('x','','y', yLabs{y},'color', '');
+            g(1,y).set_point_options('base_size', 6);
+            if y~=1
+                g(1,y).no_legend();
+            end
+            % g(1,y).set_title('');
+        end
+        
+         g.draw;
+    
+        for i=1:width(g)
+           g(1,i).results.geom_jitter_handle(1).MarkerEdgeColor = [0 0 0]; 
+           g(1,i).results.geom_jitter_handle(2).MarkerEdgeColor = [0 0 0];
+        end
+
+    else
+        disp(['only one value for grouping "', group, '", skipping violin plots...'])
+    end
+
+end
+
+
+function ViolinFig(ivT, group, label, includeER, sub_dir, groupOralFentOutput_savepath)
+    % Violin plots
+    
+
+    if includeER
+        yVars = {'Intake', 'Seeking', 'Association', 'Escalation', 'Extinction', 'Relapse', 'Recall', 'Severity'};
+        yLabs = {' Fentanyl Intake (mg/kg)', 'Seeking (Head Entries)', 'Association (Latency)', ...
+                 'Escalation (slope Training Intake)', 'Extinction Responses', 'Relapse (Reinstatement Responses)', 'Recall (Reinstatement Latency)', 'Severity'};
+    else
+        yVars = {'Intake', 'Seeking', 'Association', 'Escalation',  'Severity'};
+        yLabs = {' Fentanyl Intake (mg/kg)', 'Seeking (Head Entries)', 'Association (Latency)', ...
+                 'Escalation (slope Training Intake)', 'Severity' };
+    end
+
+    f = plotViolins(ivT, yVars, yLabs, group);
+    exportgraphics(f,[sub_dir, groupOralFentOutput_savepath, label, '.png'],'ContentType','vector');
+    close(f)
+end
+
+
+
+function CorrFig(ct, prednames, sub_dir, subfolder, suffix)
+
+    f = figure('Position',[1 1 700 600]);
+    imagesc(ct,[-1 1]); % Display correlation matrix as an image
+    colormap(brewermap([],'Spectral'));
     a = colorbar();
     a.Label.String = 'Rho';
     a.Label.FontSize = 12;
@@ -286,106 +437,73 @@ function IndividualSusceptibility_figures(ivT, ivZT, correlations, includeER, gr
     set(gca, 'YTickLabel', prednames, 'YTickLabelRotation',45, 'FontSize', 12); % set x-axis labels
     box off
     set(gca,'LineWidth',1.5,'TickDir','out')
-    tit = strsplit(suffix, '_');
-    title(tit{end})
-    % exportgraphics(f,[sub_dir, groupOralFentOutput_savepath, 'Individual Differences_Correlations', suffix, '.png'],'ContentType','vector');
-    % close(f)
-
-    % Violin plots
-    % yVars = {'Intake', 'Seeking', 'Association', 'Escalation',  'Severity'};
-    % yLabs = {' Fentanyl Intake (mg/kg)', 'Seeking (Head Entries)', 'Association (Latency)', ...
-    %          'Escalation (slope Training Intake)', 'Severity' };
-    % if includeER
-    %     yVars = [yVars, {'Extinction', 'Relapse', 'Recall'}];
-    %     yLabs = [yLabs, { 'Extinction Responses', 'Relapse (Reinstatement Responses)', 'Recall (Reinstatement Latency)'}];
-    % end
-    % 
-    % yVars = [yVars, {'Severity'}];
-    % yLabs = [yLabs, {'Severity'}];
-    % 
-    % f = plotViolins(ivT, yVars, yLabs);
-
-    % exportgraphics(f,[sub_dir, groupOralFentOutput_savepath, 'Individual Differences_Violin', suffix, '.pdf'],'ContentType','vector');
-    % close(f)
-    
-    % TSNE
-    % Y = tsne(ivZT{:,prednames},'Algorithm','exact','Distance','cosine','Perplexity',15);
-    % [coeff,score,latent] = pca(ivZT{:,prednames});
-    % PC1=score(:,1);
-    % PC2=score(:,2);
-    % 
-    % f1=figure('color','w','position',[100 100 400 325]);
-    % h1 = biplot(coeff(:,1:3),'Scores',score(:,1:3),...
-    %     'Color','b','Marker','o','VarLabels',prednames);
-    % for i=1:6
-    %     h1(i).Color=[.5 .5 .5];    
-    %     h1(i).LineWidth=1.5;
-    %     h1(i).LineStyle=':';
-    %     h1(i).Marker='o';
-    %     h1(i).MarkerSize=4;
-    %     h1(i).MarkerFaceColor=[.5 .5 .5];
-    %     h1(i).MarkerEdgeColor=[0 .0 0];
-    % end
-    % for i=7:12
-    %     h1(i).Marker='none';
-    % end
-    % 
-    % R = rescale(ivT.Severity,4,18);
-    % for i=19:40
-    %     if Sex(i-18)=='Male' % SSnote: the heck is this part for
-    %         h1(i).MarkerFaceColor=[.46 .51 1];
-    %         h1(i).MarkerEdgeColor=[0 .0 0];
-    %         h1(i).MarkerSize=R(i-18);
-    %     else
-    %         h1(i).MarkerFaceColor=[.95 .39 .13];
-    %         h1(i).MarkerEdgeColor=[0 .0 0];
-    %         h1(i).MarkerSize=R(i-18);
-    %     end
-    % end
-    % for i=13:18
-    %     h1(i).FontSize=11;
-    %     h1(i).FontWeight='bold';
-    % end
-    % h1(13).Position=[.535 .185];
-    % h1(14).Position=[.435 .625];
-    % h1(15).Position=[.4 -.265];
-    % h1(16).Position=[.485 .285];
-    % h1(17).Position=[.435 -.41];
-    % h1(18).Position=[.435 -.515];
-    % set(gca,'LineWidth',1.5,'TickDir','in','FontSize',14);
-    % grid off
-    % xlabel('');
-    % ylabel('');
-    % zlabel('');
-    % exportgraphics(f1,[sub_dir, groupOralFentOutput_savepath, 'Individual Differences PCA Vectors.pdf'],'ContentType','vector');
-    
-    % pcTable=table(Class,PC1,PC2);
-    % f1=figure('color','w','position',[100 100 300 225]);
-    % g=gramm('x',pcTable.PC1,'y',pcTable.PC2,'color',ivT.Sex,'marker',ivT.Class);
-    % g.set_color_options('hue_range',[50 542.5],'chroma',80,'lightness',60,'n_color',2);
-    % g.geom_point();
-    % g.set_names('x','PC1','y','PC2','color','Class');
-    % g.axe_property('FontSize',12,'LineWidth',1.5,'TickDir','out');
-    % g.set_order_options('marker',{'High','Mid','Low'});
-    % g.set_point_options('base_size',8);
-    % g.draw;
-    % for i=1:height(g.results.geom_point_handle)
-    %    g.results.geom_point_handle(i).MarkerEdgeColor = [0 0 0];
-    % end
-    % exportgraphics(f1,[sub_dir, groupOralFentOutput_savepath, 'Individual Differences TSNE.pdf'],'ContentType','vector');
+    title(strrep(suffix(2:end), '_', ' '))
+    exportgraphics(f,[sub_dir, subfolder, 'Correlation_table', suffix, '.png'],'ContentType','vector');
+    close(f)
 end
 
 
-function [ivT, ivZT, correlations] = IndividualSusceptibility(mT, includeER)
-    
-    IVmetrics = ["ID", "Sex", "Strain", "Intake", "Seeking", "Association", "Escalation"];
+function [correlations] = GetCorr(ivZT, z_suff, corrGroups, sub_dir, groupOralFentOutput_figs, groupOralFentOutput_savepath)
+    correlations = struct; 
+    for cg = 1:length(corrGroups)
+        use_inds = ones([height(ivZT), 1]);
+        if strcmp(corrGroups{cg}{1}{1}, 'all')
+            suff_str = [z_suff, '_all']; 
+        else
+            suff_str = z_suff;
+            for cat = 1:length(corrGroups{cg})
+                suff_str = [suff_str, '_', corrGroups{cg}{cat}{2}];
+                use_inds = use_inds & (ivZT.(corrGroups{cg}{cat}{1})==(corrGroups{cg}{cat}{2}));
+            end
+        end
+        correlations.(suff_str(2:end)) = struct;
+        correlations.(suff_str(2:end)).ivZT_inds = find(use_inds);   
+        prednames = ivZT.Properties.VariableNames;
+        prednames = prednames(~ismember(prednames, {'ID', 'Strain', 'Sex', 'Severity', 'Class'}));
+        correlations.(suff_str(2:end)).ct = corr(ivZT{find(use_inds),prednames},Type='Pearson');
+        correlations.(suff_str(2:end)).prednames = prednames;
+        if groupOralFentOutput_figs
+            CorrFig(correlations.(suff_str(2:end)).ct, prednames, sub_dir, groupOralFentOutput_savepath, suff_str)
+        end
+    end
+end
+
+
+function [ivZT] = SeverityScore(ivT, includeER)
+    % Z-Score & Severity Score
+    ivZT = ivT(:, {'ID', 'Sex', 'Strain'});
+    ivZT.Intake=zscore(ivT.Intake);
+    ivZT.Seeking=zscore(ivT.Seeking);
+    ivZT.Association=zscore(nanmax(ivT.Association)-ivT.Association);
+    ivZT.Escalation=zscore(ivT.Escalation);
     if includeER
-        IVmetrics = [IVmetrics, "Extinction", "Persistence", "Flexibility", "Relapse", "Recall"];  
+        ivZT.Extinction=zscore(ivT.Extinction);
+        ivZT.Relapse=zscore(ivT.Relapse);
+        ivZT.Recall(~isnan(ivT.Recall)) = zscore(nanmax(ivT.Recall) - ivT.Recall(~isnan(ivT.Recall)));
     end
 
+    varnames = ivZT.Properties.VariableNames;
+    prednames = varnames(varnames ~= "ID" & varnames ~= "Sex" & varnames ~= "Strain");
+
+    % Severity
+    Severity = sum(ivZT{:, prednames}')';
+    Class = cell([height(Severity) 1]);
+    Class(Severity>1.5) = {'High'};
+    Class(Severity>-1.5 & Severity<1.5) = {'Mid'};
+    Class(Severity<-1.5) = {'Low'};
+    Class = categorical(Class);
+    ivZT.Severity = Severity;
+    ivZT.Class = Class;
+end
+
+
+function [ivT] = GetMetrics(mT)
+    
+    IVmetrics = ["ID", "Sex", "Strain", "Intake", "Seeking", "Association", "Escalation"...
+                 "Extinction", "Persistence", "Flexibility", "Relapse", "Recall"];  
     numNonMets = 3; % refers to the first 3 elements of IVmetrics being labels rather than numeric metrics
-   
     ID = unique(mT.TagNumber);
+
     % Individual Variable Table
     ivT = table('Size', [length(ID), length(IVmetrics)], 'VariableTypes', ...
                [repmat({'categorical'}, [1,numNonMets]), repmat({'double'}, [1, length(IVmetrics) - numNonMets])], ...
@@ -404,6 +522,8 @@ function [ivT, ivZT, correlations] = IndividualSusceptibility(mT, includeER)
                            mT.TotalInfusions(this_ID & mT.sessionType =='Training'),1);
         ivT.Escalation(i)=e(1);
 
+        includeER = ~isempty(find(this_ID & (mT.sessionType == 'Extinction')));
+
         if includeER
             ivT.Extinction(i)= nanmean(mT.ActiveLever(this_ID & mT.sessionType == 'Extinction'));
             p = polyfit(double(mT.Session(this_ID & mT.sessionType == 'Extinction')), ...
@@ -413,39 +533,7 @@ function [ivT, ivZT, correlations] = IndividualSusceptibility(mT, includeER)
             ivT.Relapse(i) = mT.ActiveLever(this_ID & mT.sessionType == 'Reinstatement');
             ivT.Recall(i) = log(mT.Latency(this_ID & mT.sessionType == 'Reinstatement'));
         end
-    end
-
-    % Z-Score & Severity Score
-    ivZT = ivT(:, {'ID', 'Sex', 'Strain'});
-    ivZT.Intake=zscore(ivT.Intake);
-    ivZT.Seeking=zscore(ivT.Seeking);
-    ivZT.Association=zscore(nanmax(ivT.Association)-ivT.Association);
-    ivZT.Escalation=zscore(ivT.Escalation);
-    if includeER
-        ivZT.Extinction=zscore(ivT.Extinction);
-        ivZT.Relapse=zscore(ivT.Relapse);
-        ivZT.Recall(~isnan(ivT.Recall)) = zscore(ivT.Recall(~isnan(ivT.Recall)));
-    end
- 
-    % Correlations
-    varnames = ivZT.Properties.VariableNames;
-    prednames = varnames(varnames ~= "ID" & varnames ~= "Sex" & varnames ~= "Strain");
-    ct=corr(ivZT{:,prednames},Type='Pearson');
-    correlations.prednames = prednames;
-    correlations.ct = ct;
-
-    % Severity
-    Severity = sum(ivZT{:, prednames}')';
-    Class = cell([height(Severity) 1]);
-    Class(Severity>1.5) = {'High'};
-    Class(Severity>-1.5 & Severity<1.5) = {'Mid'};
-    Class(Severity<-1.5) = {'Low'};
-    Class = categorical(Class);
-    ivT=[ivT table(Severity, Class)];
-    
-    [hIn, pIn] = kstest(zscore(Severity)); % SSnote: do we need this?
-    
-   
+    end   
 end
 
 
@@ -455,37 +543,6 @@ function [LME_stats] = getLMEstats(data, dep_var, lme_form)
         LME_stats.(strcat(dep_var(dv), "LME")) = fitlme(data, strcat(dep_var(dv), lme_form));
         LME_stats.(strcat(dep_var(dv), "F")) = anova(LME_stats.(strcat(dep_var(dv), "LME")) ,'DFMethod','satterthwaite');
     end
-end
-
-
-function [f] = plotViolins(ivT, yVars, yLabs)
-    clear g
-    f = figure('units','normalized','outerposition',[0 0 1 .4]);
-    numDat = length(ivT.Intake); 
-    x = nan([1,numDat]);
-    x(ivT.Sex == categorical({'Female'})) = .8;
-    x(ivT.Sex == categorical({'Male'})) = 1.2; 
-
-    for y = 1:length(yVars)
-        g(1,y)=gramm('x',x,'y',ivT.(yVars{y}),'color',ivT.Sex);
-        g(1,y).set_order_options('color', {'Female', 'Male'})
-        g(1,y).set_color_options('hue_range',[50 542.5],'chroma',80,'lightness',60,'n_color',2);
-        g(1,y).stat_violin('normalization', 'width', 'fill', 'transparent'); %'extra_y', 0, 'half', 1, 
-        g(1,y).geom_jitter('width',.05,'dodge',-.5,'alpha',.75);
-        g(1,y).axe_property('LineWidth',1.5,'FontSize',14,'Font','Helvetica','XLim',[0.5 1.5],'TickDir','out'); %'YLim',[0 1200]
-        g(1,y).set_names('x','','y', yLabs{y},'color','');
-        g(1,y).set_point_options('base_size',6);
-        % g(1,y).no_legend();
-        g(1,y).set_title(' ');
-    end
-    
-     g.draw;
-
-    for i=1:width(g)
-       g(1,i).results.geom_jitter_handle(1).MarkerEdgeColor = [0 0 0]; 
-       g(1,i).results.geom_jitter_handle(2).MarkerEdgeColor = [0 0 0];
-    end
-
 end
 
 

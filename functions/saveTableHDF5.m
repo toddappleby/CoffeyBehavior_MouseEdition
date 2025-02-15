@@ -52,7 +52,7 @@ function saveTableHDF5(tab, savepath)
         end
     
         % Create the group for this column
-        h5create(savepath, data_path, size(data), 'Datatype', datatype);
+        h5create(savepath, data_path, size(data), 'Datatype', datatype, 'Deflate', 9, 'Chunksize', [100, width(data)]);
         h5create(savepath, class_path, [1,1], 'Datatype', "string");
         h5write(savepath, data_path, data);
         h5write(savepath, class_path, og_class);
