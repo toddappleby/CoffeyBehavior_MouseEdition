@@ -635,10 +635,10 @@ function [mTDL, mPressT, mDrugLT] = WithinSession_Processes(mT, dex, sub_dir, in
             mDrugLT = [mDrugLT; table(TagNumber, Session, DL, DLTime, Sex, Strain, sessionType)];
         end
         
-        % if indivIntake_figs 
-        %     figpath = [sub_dir, indivIntakefigs_savepath, 'Tag', char(mTDL.TagNumber(i)), '_Session', char(string(mTDL.Session(i))), '_cumolDose_and_estBrainFent'];
-        %     indiv_sessionIntakeBrainFentFig({adj_rewLP/60, DLTime}, {cumulDoseHE, DL(:)*1000}, figpath, figsave_type);
-        % end
+        if indivIntake_figs 
+            figpath = [sub_dir, indivIntakefigs_savepath, 'Tag', char(mTDL.TagNumber(i)), '_Session', char(string(mTDL.Session(i))), '_cumolDose_and_estBrainFent'];
+            indiv_sessionIntakeBrainFentFig({adj_rewLP/60, DLTime}, {cumulDoseHE, DL(:)*1000}, figpath, figsave_type);
+        end
     end
 
     if saveTabs
@@ -661,29 +661,29 @@ function [mTDL, mPressT, mDrugLT] = WithinSession_Processes(mT, dex, sub_dir, in
         end
     end
     
-    % if groupIntake_figs    
-    %     % Drug Level by Strain and Sex 
-    %     figpath = [sub_dir, groupIntakefigs_savepath, 'Drug Level Grouped by Sex and Strain'];
-    %     group_allSessionFig(mDrugLT, logical(ones([height(mDrugLT),1])), 'DLTime', 'Time (m)', 'DL', 'Estimated Brain Fentanyl (pMOL)', ...
-    %                         'Strain', 'Sex', 'Session', 'Group Drug Level', figpath, 'area', figsave_type);
-    % 
-    %     % Drug Level by Strain and Sex during Training
-    %     figpath = [sub_dir,groupIntakefigs_savepath, 'Drug Level Grouped by Sex and Strain during Training'];
-    %     group_allSessionFig(mDrugLT, mDrugLT.sessionType=='Training', 'DLTime', 'Time (m)', 'DL', 'Estimated Brain Fentanyl (pMOL)', ...
-    %                         'Strain', 'Sex', 'Session', 'Group Drug Level (Training)', figpath, 'area', figsave_type);
-    % 
-    %     % Drug Level by Sex and Session during Training Sessions 5, 10, 15
-    %     figpath = [sub_dir, groupIntakefigs_savepath, 'Drug Level Grouped by Sex and Session 5 10 15'];
-    %     subset = (mDrugLT.Session==5 | mDrugLT.Session==10 | mDrugLT.Session==15);
-    %     group_allSessionFig(mDrugLT, subset, 'DLTime', 'Time (m)', 'DL', 'Estimated Brain Fentanyl (pMOL)', ...
-    %                         'Sex', 'Session', 'none', 'Average Group Drug Level (Sessions 5, 10, 15)', figpath, 'line', figsave_type);
-    % 
-    %     % Cumulative responses (rewarded head entries) by Sex and Session during Training Sessions 5, 10, 15
-    %     figpath = [sub_dir, groupIntakefigs_savepath, 'Mean Responses Grouped by Sex and Session 5 10 15'];
-    %     subset = (mPressT.Session==5 | mPressT.Session==10 | mPressT.Session==15);
-    %     group_allSessionFig(mPressT, subset, 'adj_rewLP', 'Time (m)', 'cumulDoseHE', 'Cumulative Responses', ...
-    %                         'Sex', 'Session', 'none', 'Mean Cumulative Responses (Sessions 5, 10, 15)', figpath, 'cumbin', figsave_type);
-    % end
+    if groupIntake_figs    
+        % Drug Level by Strain and Sex 
+        figpath = [sub_dir, groupIntakefigs_savepath, 'Drug Level Grouped by Sex and Strain'];
+        group_allSessionFig(mDrugLT, logical(ones([height(mDrugLT),1])), 'DLTime', 'Time (m)', 'DL', 'Estimated Brain Fentanyl (pMOL)', ...
+                            'Strain', 'Sex', 'Session', 'Group Drug Level', figpath, 'area', figsave_type);
+
+        % Drug Level by Strain and Sex during Training
+        figpath = [sub_dir,groupIntakefigs_savepath, 'Drug Level Grouped by Sex and Strain during Training'];
+        group_allSessionFig(mDrugLT, mDrugLT.sessionType=='Training', 'DLTime', 'Time (m)', 'DL', 'Estimated Brain Fentanyl (pMOL)', ...
+                            'Strain', 'Sex', 'Session', 'Group Drug Level (Training)', figpath, 'area', figsave_type);
+
+        % Drug Level by Sex and Session during Training Sessions 5, 10, 15
+        figpath = [sub_dir, groupIntakefigs_savepath, 'Drug Level Grouped by Sex and Session 5 10 15'];
+        subset = (mDrugLT.Session==5 | mDrugLT.Session==10 | mDrugLT.Session==15);
+        group_allSessionFig(mDrugLT, subset, 'DLTime', 'Time (m)', 'DL', 'Estimated Brain Fentanyl (pMOL)', ...
+                            'Sex', 'Session', 'none', 'Average Group Drug Level (Sessions 5, 10, 15)', figpath, 'line', figsave_type);
+
+        % Cumulative responses (rewarded head entries) by Sex and Session during Training Sessions 5, 10, 15
+        figpath = [sub_dir, groupIntakefigs_savepath, 'Mean Responses Grouped by Sex and Session 5 10 15'];
+        subset = (mPressT.Session==5 | mPressT.Session==10 | mPressT.Session==15);
+        group_allSessionFig(mPressT, subset, 'adj_rewLP', 'Time (m)', 'cumulDoseHE', 'Cumulative Responses', ...
+                            'Sex', 'Session', 'none', 'Mean Cumulative Responses (Sessions 5, 10, 15)', figpath, 'cumbin', figsave_type);
+    end
 end
 
 
