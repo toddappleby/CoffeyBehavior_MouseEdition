@@ -636,8 +636,8 @@ function [mTDL, mPressT, mDrugLT] = WithinSession_Processes(mT, dex, sub_dir, in
         end
         
         if indivIntake_figs 
-            % figpath = [sub_dir, indivIntakefigs_savepath, 'Tag', char(mTDL.TagNumber(i)), '_Session', char(string(mTDL.Session(i))), '_cumolDose_and_estBrainFent'];
-            % indiv_sessionIntakeBrainFentFig({adj_rewLP/60, DLTime}, {cumulDoseHE, DL(:)*1000}, figpath, figsave_type);
+            figpath = [sub_dir, indivIntakefigs_savepath, 'Tag', char(mTDL.TagNumber(i)), '_Session', char(string(mTDL.Session(i))), '_cumolDose_and_estBrainFent'];
+            indiv_sessionIntakeBrainFentFig({adj_rewLP/60, DLTime}, {cumulDoseHE, DL(:)*1000}, figpath, figsave_type);
         end
     end
 
@@ -652,12 +652,12 @@ function [mTDL, mPressT, mDrugLT] = WithinSession_Processes(mT, dex, sub_dir, in
             figpath = [sub_dir, indivIntakefigs_savepath, 'Tag', char(IDs(j)), '_allSessionCumulDose'];
             indiv_allSessionFig(mPressT, mPressT.TagNumber==IDs(j), 'adj_rewLP', "Time (m)", ...
                                 'cumulDoseHE', "Cumulative Responses", ...
-                                 ['ID: ' char(IDs(j))], 'Session', figpath, figsave_type, 'cumbin');
+                                 ['ID: ' char(IDs(j))], 'Session', figpath, figsave_type);
     
             figpath = [sub_dir, indivIntakefigs_savepath, 'Tag', char(IDs(j)), '_allSessionEstBrainFent'];
             indiv_allSessionFig(mDrugLT, mDrugLT.TagNumber==IDs(j), 'DLTime', "Time (m)", ...
                                 'DL', "Estimated Brain Fentanyl (pMOL)", ...
-                                 ['ID: ' char(IDs(j))], 'Session', figpath, figsave_type, 'line');
+                                 ['ID: ' char(IDs(j))], 'Session', figpath, figsave_type);
         end
     end
     
@@ -770,11 +770,12 @@ function indiv_allSessionFig(tab, subset, xvar, xlab, yvar, ylab, figtitle, face
     g=gramm('x', x(subset), 'y', y(subset));
     g.set_color_options('hue_range',[-65 265],'chroma',80,'lightness',70,'n_color',2);
     g.facet_wrap(fw(subset),'scale','independent','ncols',5,'force_ticks',1);
-    if strcmp(stat_type, 'cumbin')
+        if strcmp(stat_type, 'cumbin')
         g.stat_bin('normalization','cumcount','geom','stairs','edges',0:1:180);
     else
         g.stat_summary('geom', stat_type,'setylim',1);
     end
+    g.stat_bin('normalization','cumcount','geom','stairs','edges',0:1:180);
     g.axe_property('LineWidth',1.5,'FontSize',12,'XLim',[0 180],'tickdir','out');
     g.set_names('x', xlab,'y',ylab);
     g.set_title(figtitle);
@@ -784,7 +785,7 @@ function indiv_allSessionFig(tab, subset, xvar, xlab, yvar, ylab, figtitle, face
         set(g.facet_axes_handles(i),'XTick',[0 90 180]);
     end
     saveFigsByType(f, figpath, figsave_type)
-    close(f)
+    % close(f)
 end
 
 
