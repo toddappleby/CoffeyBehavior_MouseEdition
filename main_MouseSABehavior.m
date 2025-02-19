@@ -32,18 +32,18 @@ createNewMasterTable = false; % true: generates & saves a new master table from 
 firstHour = false; % true: acquire data from the first-hour of data and analyze in addition to the full sessions
 excludeData = true; % true: excludes data based on the 'RemoveSession' column of masterSheet
 acquisition_thresh = 10; % to be labeled as "Acquire", animal must achieve an average number of infusions in the second weak of Training sessions greater than this threshold
-withinSession_analysis = false;
-individualSusceptibility_analysis = true;
+withinSession_analysis = true;
+individualSusceptibility_analysis = false;
 
 % FIGURE OPTIONS
 % Currently, if figures are generated they are also saved. 
-saveTabs = true; % true: save matlab tables of analyzed datasets
+saveTabs = false; % true: save matlab tables of analyzed datasets
 dailyFigs = false; % true: generate daily figures from dailySAFigures.m
 pubFigs = false; % true: generate publication figures from pubSAFigures.m
-indivIntake_figs = false; % true: generate figures for individual animal behavior across & within sessions
+indivIntake_figs = true; % true: generate figures for individual animal behavior across & within sessions
 groupIntake_figs = false; % true: generate figures grouped by sex, strain, etc. for animal behavior across & within sessions
-groupOralFentOutput_figs = true; % true: generate severity figures
-% SSnote: add figure save type option
+groupOralFentOutput_figs = false; % true: generate severity figures
+figsave_type = {'.png', '.pdf'};
 
 % SAVE PATHS
 % Each dataset run (determined by runNum and runType) will have its own
@@ -101,7 +101,7 @@ if excludeData
     mT = removeExcludedData(mT, mKey);
 end
 
-% get mT indices with run #s to include
+% get index for different experiments 
 dex = getExperimentIndex(mT, runNum, runType);
 
 %% Determine Acquire vs Non-acquire
@@ -114,7 +114,7 @@ if firstHour
 end
 
 %% get group statistics and save tables of data analyzed
-
+% SSnote: this doesn't save stats for all exps
 groupStats = struct;
 if firstHour; hour_groupStats = struct; end
 for et = 1:length(runType)
@@ -129,7 +129,7 @@ for et = 1:length(runType)
         writeTabs(groupStats.(char(runType(et))), [sub_dir, tabs_savepath, 'run_', char(runNum), '_exp_', char(runType(et)), '_GroupStats'], {'.mat', '.xlsx'})
         if firstHour
             writeTabs(hmT(dex.(char(runType(et))),:), [fH_sub_dir, tabs_savepath, 'run_', char(runNum), '_exp_', char(runType(et)), '_inputData'], {'.mat', '.xlsx'})
-            writeTabs(hour_groupStats.(char(runType(et))), [fH_sub_dir, tabs_savepath, 'run_', char(runNum), '_exp_', char(runType(et)), '_GroupStats', {'.mat', '.xlsx'}])
+            writeTabs(hour_groupStats.(char(runType(et))), [fH_sub_dir, tabs_savepath, 'run_', char(runNum), '_exp_', char(runType(et)), '_GroupStats'], {'.mat', '.xlsx'})
         end
     end
 end
@@ -140,10 +140,10 @@ if dailyFigs
     % Save daily copy of the master table in .mat and xlsx format and save groups stats  
     mTname = [sub_dir, tabs_savepath, dt, '_MasterBehaviorTable.mat'];
     %Generate a set of figures to spotcheck data daily
-    dailySAFigures(mT, runType, dex, [sub_dir, dailyfigs_savepath]);
+    dailySAFigures(mT, runType, dex, [sub_dir, dailyfigs_savepath], figsave_type);
     close all
     if firstHour
-        dailySAFigures(hmT, runType, dex, [fH_sub_dir, dailyfigs_savepath])
+        dailySAFigures(hmT, runType, dex, [fH_sub_dir, dailyfigs_savepath], figsave_type)
         close all
     end
 end
@@ -151,9 +151,9 @@ end
 %% Generate Clean Subset of Figures for Publication
 
 if pubFigs %  && strcmp(runType, 'ER')
-    pubSAFigures(mT, runType, dex, [sub_dir, pubfigs_savepath]);
+    pubSAFigures(mT, runType, dex, [sub_dir, pubfigs_savepath], figsave_type);
     if firstHour 
-        pubSAFigures(hmT, runType, dex, [fH_sub_dir, pubfigs_savepath]); 
+        pubSAFigures(hmT, runType, dex, [fH_sub_dir, pubfigs_savepath], figsave_type); 
     end
     close all;
 end
@@ -161,16 +161,20 @@ end
 %% Behavioral Economics Analysis 
 
 if ismember(runType, 'BE')
-    BE_processes(mT(dex.BE, :), expKey, BE_intake_canonical_flnm, sub_dir, indivIntake_figs, groupIntake_figs, saveTabs, indivIntakefigs_savepath, groupIntakefigs_savepath, tabs_savepath);
+    BE_processes(mT(dex.BE, :), expKey, BE_intake_canonical_flnm, sub_dir, indivIntake_figs, ...
+                 groupIntake_figs, saveTabs, indivIntakefigs_savepath, groupIntakefigs_savepath, ...
+                 tabs_savepath, figsave_type);
     if firstHour
-        BE_processes(hmT(dex.BE, :), expKey, BE_intake_canonical_flnm, fH_sub_dir, indivIntake_figs, groupIntake_figs, saveTabs, indivIntakefigs_savepath, groupIntakefigs_savepath, tabs_savepath);
+        BE_processes(hmT(dex.BE, :), expKey, BE_intake_canonical_flnm, fH_sub_dir, indivIntake_figs, ...
+                     groupIntake_figs, saveTabs, indivIntakefigs_savepath, groupIntakefigs_savepath, ...
+                     tabs_savepath, figsave_type);
     end
 end
 
 %% Within Session Behavioral Analysis 
 
 if withinSession_analysis
-    [mTDL, mPressT, mDrugsLT] = WithinSession_Processes(mT, dex, sub_dir, indivIntake_figs, indivIntakefigs_savepath, groupIntake_figs, groupIntakefigs_savepath, saveTabs, tabs_savepath)
+    [mTDL, mPressT, mDrugsLT] = WithinSession_Processes(mT, dex, sub_dir, indivIntake_figs, indivIntakefigs_savepath, groupIntake_figs, groupIntakefigs_savepath, saveTabs, tabs_savepath, figsave_type);
 end
 
 %% Statistic Linear Mixed Effects Models
@@ -217,87 +221,52 @@ elseif any(ismember(runType,'BE'))
 end
 
 %% Individual Variability Suseptibility Modeling
-% INDIVIDUAL VARIABLES
-% Intake = total fentanyl consumption in SA (ug/kg)
-% Seeking = total head entries in SA
-% Cue Association = HE Latency in SA (Invert?) SS note: Could, but it would need to be inverted again for the Severity score
-% Escalation = Slope of intake in SA
-% Extinction = total active lever presses during extinction
-% Persistance = slope of extinction active lever presses
-% Flexibility = total inactive lever presses during extinction (Invert?)
-% Relapse = total presses during reinstatement
-% Cue Recall = HE Latency in reinstatement (invert?)tmpT
+% 1) Calculate individual susceptibility (IS) metrics
+% 2) Calculate z-scores for each IS metric, sum these scores for each animal to get the Severity score
+% 3) Get correlations between IS metric z-scores & correlation plot, calculated within the following groupings: 
+%   - all animals, C57s, CD1s, Males, Females, Male C57s, Female C57s, Male CD1s, Female CD1s
+% 4) Make violin plots of IS metrics in the following group pairs:
+%   - C57s & CD1s, Males & Females, C57 Males & C57 Females, CD1 Males & CD1 Females
+% 5) Generate PCA plots from IS metrics that show all animals against the first 3 and the first 2 principle components. Animals are marked with respect to Strain and Sex.
+%       SSnote: add calculation of PCA for subgroups
+%
+% Individual Susceptibility Metrics
+%   1) Intake = total fentanyl consumption in SA (ug/kg)
+%   2) Seeking = total head entries in SA
+%   3) Cue Association = HE Latency in SA 
+%   4) Escalation = Slope of intake in SA
+%   5) Extinction = total active lever presses during extinction
+%   6) Persistance = slope of extinction active lever presses
+%   7) Flexibility = total inactive lever presses during extinction
+%   8) Relapse = total presses during reinstatement
+%   9) Cue Recall = HE Latency in reinstatement 
+%
+% SSnote: invert association & cue recall prior to z-scores?
+% SSnote: how does it come out if severity score is multiplied
+% 
+% Experiment-dependent use cases: 
+%   If the experiment contains ER experiment data, animals involved in these
+%       experiments will be analyzed with respect to all IS metrics. 
+%   If the experiment contains non-ER experiment data, all animals will be
+%       analyzed with respect to Intake, Seeking, Cue Association, and Extinction. 
+%
+% .mat files saved during the process
+%   - ivT: contains IS metrics for all animals
+%   - ivZT: contains IS metric Z-scores (separately calculated and saved for ER & nonER groups)
+%   - correlations: contains the correlations calculated for all subgroups,
+%                   (separately calculated and saved for ER and non ER groups)
+
 if individualSusceptibility_analysis
-    % SSnote: come up with a smarter way to do send different subsets of
-    % data through for metric calcs and correlations, this current way is
-    % dumb and involves a ton of redundancy
-    % SSnote: Currently missing first hour
-    [ivT] = GetMetrics(mT(dex.all, :));
-
-    if saveTabs
-        save([sub_dir, tabs_savepath, 'IndividualVariabilityMetrics', '.mat'], 'ivT');
-    end
-
-    % run Z scores separately for animals that lack ER sessions & associated metrics
-    if ~any(ismember(runType, 'ER'))
-        zGroups = {ones([height(ivT), 1])};
-        includeER = false;
-        z_suff = {'_noER'};
-    elseif (length(runType) > 1) & any(ismember(runType, 'ER'))
-        ER_IDs =  unique(mT.TagNumber(dex.ER));
-        ivT_ER_ind = ismember(unique(mT.TagNumber(dex.all)), ER_IDs);
-        zGroups = {ones([height(ivT), 1]), ivT_ER_ind};
-        includeER = [false, true];
-        z_suff = {'_noER', '_withER'};
-    else % only 'ER' in runType
-        zGroups = {ones([height(ivT), 1])};
-        includeER = true;
-        z_suff = {'_withER'};
-    end
-    
-    % subgroups of z-scored data to run correlatins across
-    corrGroups = {{{'all'}}, ...
-                  {{'Strain', 'c57'}}, ...
-                  {{'Strain', 'CD1'}}, ...
-                  {{'Sex', 'Male'}}, ...
-                  {{'Sex', 'Female'}}, ...
-                  {{'Strain', 'c57'}, {'Sex', 'Male'}}, ...
-                  {{'Strain', 'c57'}, {'Sex', 'Female'}}, ...
-                  {{'Strain', 'CD1'}, {'Sex', 'Male'}}, ...
-                  {{'Strain', 'CD1'}, {'Sex', 'Female'}}}; 
-
-    % violin groups
-    violSubsets = {{'all'}, {'all'}, {'Strain', 'c57'}, {'Strain', 'CD1'}};
-    violGroups = {'Strain', 'Sex', 'Sex', 'Sex'};
-    violLabels = {'Strain', 'Sex', 'c57 Sex', 'CD1 Sex'};
-    
-    for zg = 1:length(zGroups)
-        [ivZT] = SeverityScore(ivT(find(zGroups{zg}),:), includeER(zg));
-        if saveTabs
-            save([sub_dir, tabs_savepath, 'IndividualVariabilityZscores', char(z_suff{zg}), '.mat'], 'ivZT');
-        end
-        %% SSnote: correlation figure is currently getting double the number of tickmarks and labels as it should be in the nonER condition....why
-        [correlations] = GetCorr(ivZT, z_suff{zg}, corrGroups, sub_dir, groupOralFentOutput_figs, groupOralFentOutput_savepath);
-        if groupOralFentOutput_figs     
-            for vg = 1:length(violSubsets)
-                thistab = ivT(find(zGroups{zg}),:);
-                thistab.Severity = ivZT.Severity;
-                subset = ones([height(thistab), 1]);
-                if ~strcmp(violSubsets{vg}{1}, 'all')
-                    subset = subset & (thistab.(violSubsets{vg}{1}) == violSubsets{vg}{2});
-                end
-                ViolinFig(thistab(find(subset), :), violGroups{vg}, [z_suff{zg}, '_', violLabels{vg}], includeER(zg), sub_dir, groupOralFentOutput_savepath)
-            end
-            PCA_fig(ivZT, correlations.([z_suff{zg}(2:end),'_all']).prednames, ...
-                    sub_dir, groupOralFentOutput_savepath, z_suff{zg});
-        end
+    ivT = individualSusceptibility_processes(mT, dex, runType, sub_dir, saveTabs, tabs_savepath, groupOralFentOutput_figs, groupOralFentOutput_savepath, figsave_type);
+    if firstHour
+        fH_ivT = individualSusceptibility_processes(hmT, dex, runType, fH_sub_dir, saveTabs, tabs_savepath, groupOralFentOutput_figs, groupOralFentOutput_savepath, figsave_type);
     end
 end
 
 
 %% ------------------------FUNCTIONS---------------------------------
 
-function PCA_fig(ivZT, prednames, sub_dir, subfolder, suffix)
+function PCA_fig(ivZT, prednames, sub_dir, subfolder, suffix, figsave_type)
     [coeff,score,latent] = pca(ivZT{:,prednames});
     PC1=score(:,1);
     PC2=score(:,2);
@@ -359,7 +328,7 @@ function PCA_fig(ivZT, prednames, sub_dir, subfolder, suffix)
         g.results.geom_point_handle(i)
        g.results.geom_point_handle(i).MarkerEdgeColor = [0 0 0];
     end
-    exportgraphics(f1,[sub_dir, subfolder, 'PC1_PC2', suffix, '.png'],'ContentType','vector');
+    saveFigsByType(f, [sub_dir, subfolder, PC1_PC2', suffix], figsave_type)
 end
 
 
@@ -403,7 +372,7 @@ function [f] = plotViolins(ivT, yVars, yLabs, group)
 end
 
 
-function ViolinFig(ivT, group, label, includeER, sub_dir, groupOralFentOutput_savepath)
+function ViolinFig(ivT, group, label, includeER, sub_dir, groupOralFentOutput_savepath, figsave_type)
     % Violin plots
     
 
@@ -418,13 +387,13 @@ function ViolinFig(ivT, group, label, includeER, sub_dir, groupOralFentOutput_sa
     end
 
     f = plotViolins(ivT, yVars, yLabs, group);
-    exportgraphics(f,[sub_dir, groupOralFentOutput_savepath, label, '.png'],'ContentType','vector');
+    saveFigsByType(f, [sub_dir, groupOralFentOutput_savepath, label], figsave_type)
     close(f)
 end
 
 
 
-function CorrFig(ct, prednames, sub_dir, subfolder, suffix)
+function CorrFig(ct, prednames, sub_dir, subfolder, suffix, figsave_type)
 
     f = figure('Position',[1 1 700 600]);
     imagesc(ct,[-1 1]); % Display correlation matrix as an image
@@ -433,17 +402,17 @@ function CorrFig(ct, prednames, sub_dir, subfolder, suffix)
     a.Label.String = 'Rho';
     a.Label.FontSize = 12;
     a.FontSize = 12;
-    set(gca, 'XTickLabel', prednames, 'XTickLabelRotation',45, 'FontSize', 12); % set x-axis labels
-    set(gca, 'YTickLabel', prednames, 'YTickLabelRotation',45, 'FontSize', 12); % set x-axis labels
+    set(gca, 'XTick', 1:length(prednames), 'XTickLabel', prednames, 'XTickLabelRotation', 45, 'FontSize', 12); % set x-axis labels
+    set(gca, 'YTick', 1:length(prednames), 'YTickLabel', prednames, 'YTickLabelRotation', 45, 'FontSize', 12); % set x-axis labels
     box off
     set(gca,'LineWidth',1.5,'TickDir','out')
     title(strrep(suffix(2:end), '_', ' '))
-    exportgraphics(f,[sub_dir, subfolder, 'Correlation_table', suffix, '.png'],'ContentType','vector');
+    saveFigsByType(f, [sub_dir, subfolder, 'Correlation_table', suffix], figsave_type)
     close(f)
 end
 
 
-function [correlations] = GetCorr(ivZT, z_suff, corrGroups, sub_dir, groupOralFentOutput_figs, groupOralFentOutput_savepath)
+function [correlations] = GetCorr(ivZT, z_suff, corrGroups, sub_dir, groupOralFentOutput_figs, groupOralFentOutput_savepath, figsave_type)
     correlations = struct; 
     for cg = 1:length(corrGroups)
         use_inds = ones([height(ivZT), 1]);
@@ -463,7 +432,7 @@ function [correlations] = GetCorr(ivZT, z_suff, corrGroups, sub_dir, groupOralFe
         correlations.(suff_str(2:end)).ct = corr(ivZT{find(use_inds),prednames},Type='Pearson');
         correlations.(suff_str(2:end)).prednames = prednames;
         if groupOralFentOutput_figs
-            CorrFig(correlations.(suff_str(2:end)).ct, prednames, sub_dir, groupOralFentOutput_savepath, suff_str)
+            CorrFig(correlations.(suff_str(2:end)).ct, prednames, sub_dir, groupOralFentOutput_savepath, suff_str, figsave_type)
         end
     end
 end
@@ -472,21 +441,21 @@ end
 function [ivZT] = SeverityScore(ivT, includeER)
     % Z-Score & Severity Score
     ivZT = ivT(:, {'ID', 'Sex', 'Strain'});
-    ivZT.Intake=zscore(ivT.Intake);
-    ivZT.Seeking=zscore(ivT.Seeking);
-    ivZT.Association=zscore(nanmax(ivT.Association)-ivT.Association);
-    ivZT.Escalation=zscore(ivT.Escalation);
+    ivZT.Intake = zscore(ivT.Intake);
+    ivZT.Seeking = zscore(ivT.Seeking);
+    ivZT.Association = zscore(ivT.Association);
+    ivZT.Escalation = zscore(ivT.Escalation);
     if includeER
-        ivZT.Extinction=zscore(ivT.Extinction);
-        ivZT.Relapse=zscore(ivT.Relapse);
-        ivZT.Recall(~isnan(ivT.Recall)) = zscore(nanmax(ivT.Recall) - ivT.Recall(~isnan(ivT.Recall)));
+        ivZT.Extinction = zscore(ivT.Extinction);
+        ivZT.Relapse = zscore(ivT.Relapse);
+        ivZT.Recall = zscore(ivT.Recall(~isnan(ivT.Recall)));
     end
 
     varnames = ivZT.Properties.VariableNames;
     prednames = varnames(varnames ~= "ID" & varnames ~= "Sex" & varnames ~= "Strain");
 
     % Severity
-    Severity = sum(ivZT{:, prednames}')';
+    Severity = nansum(ivZT{:, prednames}')';
     Class = cell([height(Severity) 1]);
     Class(Severity>1.5) = {'High'};
     Class(Severity>-1.5 & Severity<1.5) = {'Mid'};
@@ -517,10 +486,13 @@ function [ivT] = GetMetrics(mT)
         ivT.Strain(i) = unique(mT.Strain(this_ID));
         ivT.Intake(i) = nanmean(mT.Intake(this_ID & mT.sessionType == 'Training'));
         ivT.Seeking(i) = nanmean(mT.HeadEntries(this_ID &  mT.sessionType =='Training'));
-        ivT.Association(i)= log(nanmean(mT.Latency(this_ID & mT.sessionType == 'Training'))); 
+        ivT.Association(i)= 1/log(nanmean(mT.Latency(this_ID & mT.sessionType == 'Training'))); 
         e = polyfit(double(mT.Session(this_ID & mT.sessionType == 'Training')), ...
                            mT.TotalInfusions(this_ID & mT.sessionType =='Training'),1);
         ivT.Escalation(i)=e(1);
+        if isnan(ivT.Association(i))
+            ivT.Association(i) = 0;
+        end
 
         includeER = ~isempty(find(this_ID & (mT.sessionType == 'Extinction')));
 
@@ -531,10 +503,78 @@ function [ivT] = GetMetrics(mT)
             ivT.Persistence(i) = 0 - p(1);
             ivT.Flexibility(i) = nanmean(mT.InactiveLever(this_ID & mT.sessionType == 'Extinction'));
             ivT.Relapse(i) = mT.ActiveLever(this_ID & mT.sessionType == 'Reinstatement');
-            ivT.Recall(i) = log(mT.Latency(this_ID & mT.sessionType == 'Reinstatement'));
+            ivT.Recall(i) = 1/log(mT.Latency(this_ID & mT.sessionType == 'Reinstatement'));
+            if isnan(ivT.Recall(i))
+                ivT.Recall(i) = 0;
+            end
         end
     end   
 end
+
+
+function [ivT] = individualSusceptibility_processes(mT, dex, runType, sub_dir, saveTabs, tabs_savepath, groupOralFentOutput_figs, groupOralFentOutput_savepath, figsave_type)
+
+    [ivT] = GetMetrics(mT(dex.all, :));
+
+    if saveTabs
+        save([sub_dir, tabs_savepath, 'IndividualVariabilityMetrics', '.mat'], 'ivT');
+    end
+
+    % run Z scores separately for animals that lack ER sessions & associated metrics
+    if ~any(ismember(runType, 'ER'))
+        zGroups = {ones([height(ivT), 1])};
+        includeER = false;
+        z_suff = {'_noER'};
+    elseif (length(runType) > 1) & any(ismember(runType, 'ER'))
+        ER_IDs =  unique(mT.TagNumber(dex.ER));
+        ivT_ER_ind = ismember(unique(mT.TagNumber(dex.all)), ER_IDs);
+        zGroups = {ones([height(ivT), 1]), ivT_ER_ind};
+        includeER = [false, true];
+        z_suff = {'_noER', '_withER'};
+    else % only 'ER' in runType
+        zGroups = {ones([height(ivT), 1])};
+        includeER = true;
+        z_suff = {'_withER'};
+    end
+    
+    % subgroups of z-scored data to run correlatins across
+    corrGroups = {{{'all'}}, ...
+                  {{'Strain', 'c57'}}, ...
+                  {{'Strain', 'CD1'}}, ...
+                  {{'Sex', 'Male'}}, ...
+                  {{'Sex', 'Female'}}, ...
+                  {{'Strain', 'c57'}, {'Sex', 'Male'}}, ...
+                  {{'Strain', 'c57'}, {'Sex', 'Female'}}, ...
+                  {{'Strain', 'CD1'}, {'Sex', 'Male'}}, ...
+                  {{'Strain', 'CD1'}, {'Sex', 'Female'}}}; 
+
+    % violin groups
+    violSubsets = {{'all'}, {'all'}, {'Strain', 'c57'}, {'Strain', 'CD1'}};
+    violGroups = {'Strain', 'Sex', 'Sex', 'Sex'};
+    violLabels = {'Strain', 'Sex', 'c57 Sex', 'CD1 Sex'};
+    
+    for zg = 1:length(zGroups)
+        [ivZT] = SeverityScore(ivT(find(zGroups{zg}),:), includeER(zg));
+        if saveTabs
+            save([sub_dir, tabs_savepath, 'IndividualVariabilityZscores', char(z_suff{zg}), '.mat'], 'ivZT');
+        end
+        [correlations] = GetCorr(ivZT, z_suff{zg}, corrGroups, sub_dir, groupOralFentOutput_figs, groupOralFentOutput_savepath, figsave_type);
+        if groupOralFentOutput_figs     
+            for vg = 1:length(violSubsets)
+                thistab = ivT(find(zGroups{zg}),:);
+                thistab.Severity = ivZT.Severity;
+                subset = ones([height(thistab), 1]);
+                if ~strcmp(violSubsets{vg}{1}, 'all')
+                    subset = subset & (thistab.(violSubsets{vg}{1}) == violSubsets{vg}{2});
+                end
+                ViolinFig(thistab(find(subset), :), violGroups{vg}, [z_suff{zg}, '_', violLabels{vg}], includeER(zg), sub_dir, groupOralFentOutput_savepath, figsave_type)
+            end
+            PCA_fig(ivZT, correlations.([z_suff{zg}(2:end),'_all']).prednames, ...
+                    sub_dir, groupOralFentOutput_savepath, z_suff{zg}, figsave_type);
+        end
+    end
+end
+
 
 
 function [LME_stats] = getLMEstats(data, dep_var, lme_form)
@@ -546,7 +586,7 @@ function [LME_stats] = getLMEstats(data, dep_var, lme_form)
 end
 
 
-function [mTDL, mPressT, mDrugsLT] = WithinSession_Processes(mT, dex, sub_dir, indivIntake_figs, indivIntakefigs_savepath, groupIntake_figs, groupIntakefigs_savepath, saveTabs, tabs_savepath)
+function [mTDL, mPressT, mDrugLT] = WithinSession_Processes(mT, dex, sub_dir, indivIntake_figs, indivIntakefigs_savepath, groupIntake_figs, groupIntakefigs_savepath, saveTabs, tabs_savepath, figsave_type)
     % Analyze Rewarded Lever Pressing Across the Session
     % 97 = rewarded lever presses followed by head entry
     % 99 = rewarded head entries (preceded by lever press)
@@ -595,10 +635,10 @@ function [mTDL, mPressT, mDrugsLT] = WithinSession_Processes(mT, dex, sub_dir, i
             mDrugLT = [mDrugLT; table(TagNumber, Session, DL, DLTime, Sex, Strain, sessionType)];
         end
         
-        if indivIntake_figs 
-            figpath = [sub_dir, indivIntakefigs_savepath, 'Tag', char(mTDL.TagNumber(i)), '_Session', char(string(mTDL.Session(i))), '_cumolDose_and_estBrainFent.pdf'];
-            indiv_sessionIntakeBrainFentFig({adj_rewLP/60, DLTime}, {cumulDoseHE, DL(:)*1000}, figpath);
-        end
+        % if indivIntake_figs 
+        %     figpath = [sub_dir, indivIntakefigs_savepath, 'Tag', char(mTDL.TagNumber(i)), '_Session', char(string(mTDL.Session(i))), '_cumolDose_and_estBrainFent'];
+        %     indiv_sessionIntakeBrainFentFig({adj_rewLP/60, DLTime}, {cumulDoseHE, DL(:)*1000}, figpath, figsave_type);
+        % end
     end
 
     if saveTabs
@@ -609,41 +649,41 @@ function [mTDL, mPressT, mDrugsLT] = WithinSession_Processes(mT, dex, sub_dir, i
     if indivIntake_figs
         IDs=unique(mPressT.TagNumber);
         for j=1:length(IDs)
-            figpath = [sub_dir, indivIntakefigs_savepath, 'Tag', char(IDs(j)), '_allSessionCumulDose.png'];
+            figpath = [sub_dir, indivIntakefigs_savepath, 'Tag', char(IDs(j)), '_allSessionCumulDose'];
             indiv_allSessionFig(mPressT, mPressT.TagNumber==IDs(j), 'adj_rewLP', "Time (m)", ...
                                 'cumulDoseHE', "Cumulative Responses", ...
-                                 ['ID: ' char(IDs(j))], 'Session', figpath);
+                                 ['ID: ' char(IDs(j))], 'Session', figpath, figsave_type);
     
-            figpath = [sub_dir, indivIntakefigs_savepath, 'Tag', char(IDs(j)), '_allSessionEstBrainFent.png'];
-            indiv_allSessionFig(mDrugLT, mPressT.TagNumber==IDs(j), 'DLTime', "Time (m)", ...
+            figpath = [sub_dir, indivIntakefigs_savepath, 'Tag', char(IDs(j)), '_allSessionEstBrainFent'];
+            indiv_allSessionFig(mDrugLT, mDrugLT.TagNumber==IDs(j), 'DLTime', "Time (m)", ...
                                 'DL', "Estimated Brain Fentanyl (pMOL)", ...
-                                 ['ID: ' char(IDs(j))], 'Session', figpath);
+                                 ['ID: ' char(IDs(j))], 'Session', figpath, figsave_type);
         end
     end
     
-    if groupIntake_figs    
-        % Drug Level by Strain and Sex 
-        figpath = [sub_dir, groupIntakefigs_savepath, 'Drug Level Grouped by Sex and Strain.png'];
-        group_allSessionFig(mDrugLT, logical(ones([height(mDrugLT),1])), 'DLTime', 'Time (m)', 'DL', 'Estimated Brain Fentanyl (pMOL)', ...
-                            'Strain', 'Sex', 'Session', 'Group Drug Level', figpath, 'area');
-    
-        % Drug Level by Strain and Sex during Training
-        figpath = [sub_dir,groupIntakefigs_savepath, 'Drug Level Grouped by Sex and Strain during Training.png'];
-        group_allSessionFig(mDrugLT, mDrugLT.sessionType=='Training', 'DLTime', 'Time (m)', 'DL', 'Estimated Brain Fentanyl (pMOL)', ...
-                            'Strain', 'Sex', 'Session', 'Group Drug Level (Training)', figpath, 'area');
-    
-        % Drug Level by Sex and Session during Training Sessions 5, 10, 15
-        figpath = [sub_dir, groupIntakefigs_savepath, 'Drug Level Grouped by Sex and Session 5 10 15.png'];
-        subset = (mDrugLT.Session==5 | mDrugLT.Session==10 | mDrugLT.Session==15);
-        group_allSessionFig(mDrugLT, subset, 'DLTime', 'Time (m)', 'DL', 'Estimated Brain Fentanyl (pMOL)', ...
-                            'Sex', 'Session', 'none', 'Average Group Drug Level (Sessions 5, 10, 15)', figpath, 'line');
-    
-        % Cumulative responses (rewarded head entries) by Sex and Session during Training Sessions 5, 10, 15
-        figpath = [sub_dir, groupIntakefigs_savepath, 'Mean Responses Grouped by Sex and Session 5 10 15.png'];
-        subset = (mPressT.Session==5 | mPressT.Session==10 | mPressT.Session==15);
-        group_allSessionFig(mPressT, subset, 'adj_rewLP', 'Time (m)', 'cumulDoseHE', 'Cumulative Responses', ...
-                            'Sex', 'Session', 'none', 'Mean Cumulative Responses (Sessions 5, 10, 15)', figpath, 'cumbin');
-    end
+    % if groupIntake_figs    
+    %     % Drug Level by Strain and Sex 
+    %     figpath = [sub_dir, groupIntakefigs_savepath, 'Drug Level Grouped by Sex and Strain'];
+    %     group_allSessionFig(mDrugLT, logical(ones([height(mDrugLT),1])), 'DLTime', 'Time (m)', 'DL', 'Estimated Brain Fentanyl (pMOL)', ...
+    %                         'Strain', 'Sex', 'Session', 'Group Drug Level', figpath, 'area', figsave_type);
+    % 
+    %     % Drug Level by Strain and Sex during Training
+    %     figpath = [sub_dir,groupIntakefigs_savepath, 'Drug Level Grouped by Sex and Strain during Training'];
+    %     group_allSessionFig(mDrugLT, mDrugLT.sessionType=='Training', 'DLTime', 'Time (m)', 'DL', 'Estimated Brain Fentanyl (pMOL)', ...
+    %                         'Strain', 'Sex', 'Session', 'Group Drug Level (Training)', figpath, 'area', figsave_type);
+    % 
+    %     % Drug Level by Sex and Session during Training Sessions 5, 10, 15
+    %     figpath = [sub_dir, groupIntakefigs_savepath, 'Drug Level Grouped by Sex and Session 5 10 15'];
+    %     subset = (mDrugLT.Session==5 | mDrugLT.Session==10 | mDrugLT.Session==15);
+    %     group_allSessionFig(mDrugLT, subset, 'DLTime', 'Time (m)', 'DL', 'Estimated Brain Fentanyl (pMOL)', ...
+    %                         'Sex', 'Session', 'none', 'Average Group Drug Level (Sessions 5, 10, 15)', figpath, 'line', figsave_type);
+    % 
+    %     % Cumulative responses (rewarded head entries) by Sex and Session during Training Sessions 5, 10, 15
+    %     figpath = [sub_dir, groupIntakefigs_savepath, 'Mean Responses Grouped by Sex and Session 5 10 15'];
+    %     subset = (mPressT.Session==5 | mPressT.Session==10 | mPressT.Session==15);
+    %     group_allSessionFig(mPressT, subset, 'adj_rewLP', 'Time (m)', 'cumulDoseHE', 'Cumulative Responses', ...
+    %                         'Sex', 'Session', 'none', 'Mean Cumulative Responses (Sessions 5, 10, 15)', figpath, 'cumbin', figsave_type);
+    % end
 end
 
 
@@ -663,7 +703,7 @@ function [g] = BE_subplot(xvar, yvar, colorGroup, colorLab, lightGroup, lightLab
 end
 
 
-function group_allSessionFig(tab, subset, xvar, xlab, yvar, ylab, colorGroup, lightGroup, facetwrap, figtitle, figpath, stat_type)
+function group_allSessionFig(tab, subset, xvar, xlab, yvar, ylab, colorGroup, lightGroup, facetwrap, figtitle, figpath, stat_type, figsave_type)
     x = tab.(xvar);
     y = tab.(yvar); 
     cg = tab.(colorGroup);
@@ -713,12 +753,12 @@ function group_allSessionFig(tab, subset, xvar, xlab, yvar, ylab, colorGroup, li
         g.facet_axes_handles(i).YLim=[0 yMax];
     end
 
-    exportgraphics(f, figpath);
+    saveFigsByType(f, figpath, figsave_type)
     close(f)
 end
 
 
-function indiv_allSessionFig(tab, subset, xvar, xlab, yvar, ylab, figtitle, facetwrap, figpath)
+function indiv_allSessionFig(tab, subset, xvar, xlab, yvar, ylab, figtitle, facetwrap, figpath, figsave_type)
     x = tab.(xvar);
     y = tab.(yvar);
     fw = tab.(facetwrap);
@@ -729,7 +769,7 @@ function indiv_allSessionFig(tab, subset, xvar, xlab, yvar, ylab, figtitle, face
     f=figure('Position',[1 1 1920 1080]);
     g=gramm('x', x(subset), 'y', y(subset));
     g.set_color_options('hue_range',[-65 265],'chroma',80,'lightness',70,'n_color',2);
-    g.facet_wrap(fw(subset),'scale','independent','ncols',4,'force_ticks',1);
+    g.facet_wrap(fw(subset),'scale','independent','ncols',5,'force_ticks',1);
     g.stat_bin('normalization','cumcount','geom','stairs','edges',0:1:180);
     g.axe_property('LineWidth',1.5,'FontSize',12,'XLim',[0 180],'tickdir','out');
     g.set_names('x', xlab,'y',ylab);
@@ -739,12 +779,12 @@ function indiv_allSessionFig(tab, subset, xvar, xlab, yvar, ylab, figtitle, face
         g.facet_axes_handles(i).Title.FontSize=12;
         set(g.facet_axes_handles(i),'XTick',[0 90 180]);
     end
-    exportgraphics(f, figpath);
-    close(f)
+    saveFigsByType(f, figpath, figsave_type)
+    % close(f)
 end
 
 
-function indiv_sessionIntakeBrainFentFig(xvar, yvar, figpath)
+function indiv_sessionIntakeBrainFentFig(xvar, yvar, figpath, figsave_type)
     f=figure('Position',[100 100 400 800]);
     clear g
     g(1,1)=gramm('x',xvar{1}, 'y', yvar{1}); 
@@ -756,7 +796,7 @@ function indiv_sessionIntakeBrainFentFig(xvar, yvar, figpath)
     g(2,1).axe_property('LineWidth',1.5,'FontSize',13,'XLim',[0 180],'tickdir','out');
     g(2,1).set_names('x','Session Time (m)','y','Brain Fentanyl Concentration pMOL');
     g.draw();
-    exportgraphics(f,figpath,'ContentType','vector');
+    saveFigsByType(f, figpath, figsave_type)
     close(f);
 end
 
@@ -781,12 +821,12 @@ function BE_GroupFig(tab, yvar, ylab, subset, figpath)
            set(g(1,col).results.stat_summary(ss).point_handle,'MarkerEdgeColor',[0 0 0]);  
        end
     end
-    exportgraphics(f,figpath,'ContentType','vector');
+    saveFigsByType(f, figpath, figsave_type)
     close(f);
 end
 
 
-function BE_IndivFig(TagNumber, aT, sub_dir, indivIntakefigs_savepath)
+function BE_IndivFig(TagNumber, aT, sub_dir, indivIntakefigs_savepath, figsave_type)
     IDs = unique(TagNumber);
     xrange = 1:50;
     for i = 1:length(IDs) 
@@ -797,11 +837,22 @@ function BE_IndivFig(TagNumber, aT, sub_dir, indivIntakefigs_savepath)
             scatter(log(aT.fitX{i}),log(aT.fitY{i}),10);
             plot([log(aT.Beta(i)) log(aT.Beta(i))],[min(aT.modY{i}) max(aT.modY{i})],'--k');
             xlim([-1 5]);
-            title(IDs(i))
-            exportgraphics(f1,[sub_dir, indivIntakefigs_savepath, 'Tag', char(IDs(i)), '_BE_curvefit.png']);
+            title(IDs(i))  
             hold off
+            saveFigsByType(f1, [sub_dir, indivIntakefigs_savepath, 'Tag', char(IDs(i)), '_BE_curvefit'], figsave_type)
             close(f1);
         end
+    end
+end
+
+function saveFigsByType(f, path, figsave_type)
+    for fst = 1:length(figsave_type)
+        if strcmp(figsave_type{fst}, '.pdf')
+            exportgraphics(f,[path, figsave_type{fst}], 'ContentType','vector')
+        else
+            exportgraphics(f,[path, figsave_type{fst}]);
+        end
+        disp(['saved figure: ', path, figsave_type{fst}])
     end
 end
 
@@ -932,7 +983,7 @@ function [beT, beiT, aT] = BE_Analysis(mT, expKey, BE_intake_canonical_flnm)
 
 end
 
-function BE_processes(mT, expKey, BE_intake_canonical_flnm, sub_dir, indivIntake_figs, groupIntake_figs, saveTabs, indivIntakefigs_savepath, groupIntakefigs_savepath, tabs_savepath)
+function BE_processes(mT, expKey, BE_intake_canonical_flnm, sub_dir, indivIntake_figs, groupIntake_figs, saveTabs, indivIntakefigs_savepath, groupIntakefigs_savepath, tabs_savepath, figsave_type)
     [beT, beiT, aT] = BE_Analysis(mT, expKey, BE_intake_canonical_flnm);
     
     if saveTabs
@@ -942,47 +993,48 @@ function BE_processes(mT, expKey, BE_intake_canonical_flnm, sub_dir, indivIntake
     end
     
     if indivIntake_figs
-        BE_IndivFig(beT.TagNumber, aT, sub_dir, indivIntakefigs_savepath);
+        BE_IndivFig(beT.TagNumber, aT, sub_dir, indivIntakefigs_savepath, figsave_type);
     end
 
     if groupIntake_figs
         subset = beT.Acquire=='Acquire';
 
-        figpath = [sub_dir, groupIntakefigs_savepath, 'BE Intake and Active Lever Grouped by Sex and Strain Acquirers.png'];
-        BE_GroupFig(beT, {beT.measuredIntake, beT.ActiveLever}, ["Fentanyl Intake (μg/kg)", "Active Lever Presses"], subset, figpath);
+        figpath = [sub_dir, groupIntakefigs_savepath, 'BE Intake and Active Lever Grouped by Sex and Strain Acquirers'];
+        BE_GroupFig(beT, {beT.measuredIntake, beT.ActiveLever}, ["Fentanyl Intake (μg/kg)", "Active Lever Presses"], subset, figpath, figsave_type);
         
-        figpath = [sub_dir, groupIntakefigs_savepath, 'BE Latency and Rewards Grouped by Sex and Strain Acquirers.png'];
+        figpath = [sub_dir, groupIntakefigs_savepath, 'BE Latency and Rewards Grouped by Sex and Strain Acquirers'];
         BE_GroupFig(beT, {beT.Latency, beT.Latency}, ["Head Entry Latency", "Rewards"], subset, figpath);
 
         subset = beT.Acquire=='NonAcquire';
 
-        figpath = [sub_dir, groupIntakefigs_savepath, 'BE Intake and Active Lever Grouped by Sex and Strain NonAcquirers.png'];
-        BE_GroupFig(beT, {beT.measuredIntake, beT.ActiveLever}, ["Fentanyl Intake (μg/kg)", "Active Lever Presses"], subset, figpath);
+        figpath = [sub_dir, groupIntakefigs_savepath, 'BE Intake and Active Lever Grouped by Sex and Strain NonAcquirers'];
+        BE_GroupFig(beT, {beT.measuredIntake, beT.ActiveLever}, ["Fentanyl Intake (μg/kg)", "Active Lever Presses"], subset, figpath, figsave_type);
         
-        figpath = [sub_dir, groupIntakefigs_savepath, 'BE Latency and Rewards Grouped by Sex and Strain NonAcquirers.png'];
-        BE_GroupFig(beT, {beT.Latency, beT.Latency}, ["Head Entry Latency", "Rewards"], subset, figpath);
+        figpath = [sub_dir, groupIntakefigs_savepath, 'BE Latency and Rewards Grouped by Sex and Strain NonAcquirers'];
+        BE_GroupFig(beT, {beT.Latency, beT.Latency}, ["Head Entry Latency", "Rewards"], subset, figpath, figsave_type);
 
     end
 end
 
 function [hmT] = getFirstHour(mT)
-    % active lever 22
-    % inactive lever 23
-    % head entries 95
-    % rewarded lever presses  96
-    % rewarded lever presses followed by head entry 97
-    % rewarded head entries (preceded by lever press) 99
-    % head entries following rewarded lever presses 98
-    % rewarded lever presses preceding head entries 96
-    % earned infusions 17
+    % 22: active lever 22
+    % 23: inactive lever 23
+    % 95: head entries 95
+    % 96: rewarded lever presses preceding head entries 96
+    % 97: rewarded lever presses 97
+    % 98: head entries following rewarded lever presses 98
+    % 99: head entries (includes head entries following human-given reward + cue)
+    % 17: infusion on 17
+    % earned infusions count == rewarded leverpresses
+    % total infusions count == infusion on
     
     copyVars = {'TagNumber', 'Session', 'sessionType', 'slideSession', ...
                'Strain', 'Sex', 'TimeOfBehavior', 'Chamber', 'Acquire'};
     hmT = mT(:, copyVars);
 
     hourVars = {'ActiveLever', 'InactiveLever', 'HeadEntries', 'EarnedInfusions' ...
-                'RewardedHeadEntries', 'RewardedLeverPresses'}; %SSnote: don't love the ambiguity of column ame "RewardedLeverPresses"
-    hourCodes = [22, 23, 95, 96, 99, 97]; % codes for items in hourVars
+                'TotalInfusions', 'RewardedHeadEntries', 'RewardedLeverPresses'}; %SSnote: don't love the ambiguity of column name "RewardedLeverPresses"
+    hourCodes = [22, 23, 95, 97, 17, 99, 97]; % codes for items in hourVars
     allEC = cell([height(mT), 1]);
     allET = cell([height(mT), 1]);
     for hv = 1:length(hourVars)
@@ -993,7 +1045,7 @@ function [hmT] = getFirstHour(mT)
             EC = EC(ET <= 3600);
             ET = ET(ET <= 3600); 
 
-            if strcmp(hourVars{hv}, 'EarnedInfusions')
+            if strcmp(hourVars{hv}, 'EarnedInfusions') | strcmp(hourVars{hv}, 'TotalInfusions')
                 % calculate earned and total infusions 
                 if mT.sessionType(fl) == categorical("Reinstatement")
                     dat(fl) = 0;

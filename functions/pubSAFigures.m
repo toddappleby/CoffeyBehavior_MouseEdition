@@ -1,4 +1,4 @@
-function pubSAFigures(mT, runType, dex, figFold)
+function pubSAFigures(mT, runType, dex, figFold, figsave_type)
 % pubSAFigures Generates Clean Subset of Figures for Publication
 % pT = the master behavior table from main_MouseSABehavior
 % dt = current date time variable
@@ -16,7 +16,6 @@ function pubSAFigures(mT, runType, dex, figFold)
             titles = {'Self-Administration', 'Days 13-15'};
         end
         colorOptions = {'hue_range',[90 450],'lightness_range',[85 35],'chroma_range',[30 70]};
-        figType = '.png'; % image save type
         
         %% Active Lever
         fnum = 1;
@@ -258,7 +257,7 @@ function pubSAFigures(mT, runType, dex, figFold)
         
         for y = 1:length(yVars)
             if ~isempty(subInds{y})
-                plotPubFig(pT, expStr, yVars{y}, yLabs{y}, subInds{y}, titles, figNames{y}, figType, donut{y}, ...
+                plotPubFig(pT, expStr, yVars{y}, yLabs{y}, subInds{y}, titles, figNames{y}, figsave_type, donut{y}, ...
                             'GrammOptions', grammOptions{y}, 'ColorOptions', colorOptions, ...
                             'OrderOptions', orderOptions{y}, 'LegendOptions', legendOptions{y});
             end
@@ -268,7 +267,7 @@ function pubSAFigures(mT, runType, dex, figFold)
 end
 
 %%
-function [g] = plotPubFig(pT, runType, yVar, yLab, subInd, titles, figName, figType, donut, varargin)
+function [g] = plotPubFig(pT, runType, yVar, yLab, subInd, titles, figName, figsave_type, donut, varargin)
     % try
         % why am I parsing it this way? this is dumb    
         p = inputParser;
@@ -388,17 +387,25 @@ function [g] = plotPubFig(pT, runType, yVar, yLab, subInd, titles, figName, figT
         end
        
         % Export Figure
-        exportgraphics(f1,[figName, figType],'ContentType','vector');
+        for fst = 1:length(figsave_type)
+            if strcmp(figsave_type{fst}, '.pdf')
+                exportgraphics(gcf,[figName, figsave_type{fst}], 'ContentType','vector')
+            else
+                exportgraphics(gcf,[figName, figsave_type{fst}]);
+            end
+            disp(['saved figure: ', figName, figsave_type{fst}])
+        end
+    
     
         if donut
-            plotDonut(pT, subInd, g, figName, figType)
+            plotDonut(pT, subInd, g, figName, figsave_type)
         end
     % catch
         % disp('oh no! had to skip a figure, wonder why??')
     % end    
 end
     
-function plotDonut(pT, subInd, g, figName, figType)
+function plotDonut(pT, subInd, g, figName, figsave_type)
     % Donut Chart for Overlay
         groupStats = grpstats(pT(pT.Session==1 & subInd, :),["Sex","Strain","Acquire"],["mean","sem"],"DataVars",'ActiveLever');
         % groupStats = sortrows(groupStats,"Acquire",'descend');
@@ -414,6 +421,13 @@ function plotDonut(pT, subInd, g, figName, figType)
         d.FontName='Arial Rounded MT Bold';
     
         % Export Figure
-        exportgraphics(f2,[figName, '_Donut', figType],'ContentType','vector');
+       for fst = 1:length(figsave_type)
+            if strcmp(figsave_type{fst}, '.pdf')
+                exportgraphics(gcf,[figName, '_Donut', figsave_type{fst}], 'ContentType','vector')
+            else
+                exportgraphics(gcf,[figName, '_Donut', figsave_type{fst}]);
+            end
+            disp(['saved figure: ', figName, '_Donut', figsave_type{fst}])
+        end
 
 end

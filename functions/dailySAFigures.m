@@ -1,4 +1,4 @@
-function dailySAFigures(mT,runType, dex, figFold)
+function dailySAFigures(mT,runType, dex, figFold, figsave_type)
     % dailySAFigures generates a set of figures to explore oral SA data dily
     % pT = the master behavior table from main_MouseSABehavior
     % dt = current date time variable
@@ -13,73 +13,73 @@ function dailySAFigures(mT,runType, dex, figFold)
 
         pT = mT(dex.(string(expStr)),:);
         % fig 1: all animals grouped by sex and strain
-        figName{1} = fullfile(figFold,[expStr, '_GroupBehaviorFig.jpg']);
+        figName{1} = fullfile(figFold,[expStr, '_GroupBehaviorFig']);
         grammOptions{1} = {'color', pT.Strain, 'lightness', pT.Sex, 'group', pT.sessionType};
         orderOptions{1} = {'lightness',{'Female','Male'}, 'color',{'c57','CD1'}};
         legOptions{1} = {'color', 'Strain', 'lightness', 'Sex'};
         
         % fig 2: all animals grouped by acquisition
-        figName{2} = fullfile(figFold,[expStr, '_AquiredBehaviorFig.jpg']);
+        figName{2} = fullfile(figFold,[expStr, '_AquiredBehaviorFig']);
         grammOptions{2} = {'color',pT.Strain,'lightness',pT.Acquire,'group',pT.sessionType};
         orderOptions{2} = {'lightness', {'NonAcquire','Acquire'}, 'color',{'c57','CD1'}};
         legOptions{2} = {'color', 'Strain', 'lightness', 'Acquire'};
     
         % fig 3: acquirer animals grouped by strain
-        figName{3} = fullfile(figFold,[expStr, '_StrainCollapsedBehaviorAcquirersOnlyFigFig.jpg']);
+        figName{3} = fullfile(figFold,[expStr, '_StrainCollapsedBehaviorAcquirersOnlyFig']);
         grammOptions{3} = {'color',pT.Strain,'group',pT.sessionType,'subset',pT.Acquire=='Acquire'};
         orderOptions{3} = {'color',{'c57','CD1'}};
         legOptions{3} = {'color', 'Strain'};
     
         % fig 4: acquirer animals grouped by sex
-        figName{4} = fullfile(figFold,[expStr, '_SexCollapsedBehaviorAcquirersOnlyFigFig.jpg']);
+        figName{4} = fullfile(figFold,[expStr, '_SexCollapsedBehaviorAcquirersOnlyFig']);
         grammOptions{4} = {'lightness',pT.Sex,'group',pT.sessionType,'subset',pT.Acquire=='Acquire'};
         orderOptions{4} = {'lightness',{'Female','Male'}};
         legOptions{4} = {'lightness', 'Sex'};
     
         % fig 5: acquirer animals grouped by sex and strain
-        figName{5} = fullfile(figFold,[expStr, '_GroupBehaviorAcquirersOnlyFig.jpg']);
+        figName{5} = fullfile(figFold,[expStr, '_GroupBehaviorAcquirersOnlyFig']);
         grammOptions{5} = {'color',pT.Strain,'lightness',pT.Sex,'group',pT.sessionType,'subset',pT.Acquire=='Acquire'};
         orderOptions{5} = {'lightness',{'Female','Male'},'color',{'c57','CD1'}};
         legOptions{5} = {'color', 'Strain', 'lightness', 'Sex'};
     
         % fig 6: all animals grouped by Morning/Afternoon session
-        figName{6} = fullfile(figFold,[expStr, '_TimeOfBehaviorCollapsedFig.jpg']);
+        figName{6} = fullfile(figFold,[expStr, '_TimeOfBehaviorCollapsedFig']);
         grammOptions{6} = {'color', pT.TimeOfBehavior, 'lightness', pT.Strain};
         orderOptions{6} = {'color',{'Morning','Afternoon'}, 'lightness', {'c57', 'CD1'}};
         legOptions{6} = {'color', 'Time of Session', 'lightness', 'Strain'};
     
         % % fig 7: all animals individually
-        % figName{7} = fullfile(figFold,[expStr, '_IndividualBehaviorAllFig.jpg']);
+        % figName{7} = fullfile(figFold,[expStr, '_IndividualBehaviorAllFig']);
         % grammOptions{7} = {'color', pT.TagNumber, 'lightness', pT.Acquire};
         % orderOptions{7} = {'lightness', {'NonAcquire','Acquire'}};
         % legOptions{7} = {'color', 'TagNumber', 'lightness', 'Acquire'};
     
         % % fig 8: acquirers individually
-        % figName{8} = fullfile(figFold,[expStr, '_IndividualBehaviorAcquireFig.jpg']);
+        % figName{8} = fullfile(figFold,[expStr, '_IndividualBehaviorAcquireFig']);
         % grammOptions{8} = {'color', pT.TagNumber, 'lightness', pT.Strain, 'subset', pT.Acquire=='Acquire'};
         % orderOptions{8} = {'lightness',{'c57','CD1'}};
         % legOptions{8} = {'color', 'TagNumber', 'lightness', 'Strain'};
         % 
         % % fig 9: non acquirers individually
-        % figName{9} = fullfile(figFold,[expStr, '_IndividualBehaviorNonacquireFig.jpg']);
+        % figName{9} = fullfile(figFold,[expStr, '_IndividualBehaviorNonacquireFig']);
         % grammOptions{9} = {'color', pT.TagNumber, 'lightness', pT.Strain, 'subset', pT.Acquire=='NonAcquire'};
         % orderOptions{9} = {'lightness',{'c57','CD1'}};
         % legOptions{9} = {'color', 'TagNumber', 'lightness', 'Strain'};
          
-        % fig 10: all animals grouped by chamber
-        figName{10} = fullfile(figFold,[expStr, '_BoxBehaviorAllFig.jpg']);
-        grammOptions{10} = {'color', pT.Chamber, 'lightness', pT.Acquire};
-        orderOptions{10} = {'lightness',{'NonAcquire','Acquire'}};
-        legOptions{10} = {'color', 'Chamber', 'lightness', 'Acquire'};
+        % % fig 10: all animals grouped by chamber
+        % figName{10} = fullfile(figFold,[expStr, '_BoxBehaviorAllFig']);
+        % grammOptions{10} = {'color', pT.Chamber, 'lightness', pT.Acquire};
+        % orderOptions{10} = {'lightness',{'NonAcquire','Acquire'}};
+        % legOptions{10} = {'color', 'Chamber', 'lightness', 'Acquire'};
         
         % % fig 11: acquirers grouped by chamber
-        % figName{11} = fullfile(figFold,[expStr, '_BoxBehaviorAcquireFig.jpg']);
+        % figName{11} = fullfile(figFold,[expStr, '_BoxBehaviorAcquireFig']);
         % grammOptions{11} = {'color', pT.Chamber, 'lightness', pT.TimeOfBehavior, 'subset', pT.Acquire=='Acquire'};
         % orderOptions{11} = {'lightness',{'Morning','Afternoon'}};
         % legOptions{11} = {'color', 'Chamber', 'lightness', 'Time of Session'};
         % 
         % % fig 12: nonacquirers grouped by chamber
-        % figName{12} = fullfile(figFold,[expStr, '_BoxBehaviorNonacquireFig.jpg']);
+        % figName{12} = fullfile(figFold,[expStr, '_BoxBehaviorNonacquireFig']);
         % grammOptions{12} = {'color', pT.Chamber, 'lightness', pT.TimeOfBehavior, 'subset', pT.Acquire=='NonAcquire'};
         % orderOptions{12} = {'lightness',{'Morning','Afternoon'}};
         % legOptions{12} = {'color', 'Chamber', 'lightness', 'Time of Session'};
@@ -89,14 +89,14 @@ function dailySAFigures(mT,runType, dex, figFold)
     
         for f = 1:length(figName)
             if ~isempty(figName{f})
-                plotDailies(pT, expStr, yVals, yLabs, figName{f}, 'GrammOptions', grammOptions{f}, 'OrderOptions', orderOptions{f}, 'LegOptions', legOptions{f});
+                plotDailies(pT, expStr, yVals, yLabs, figName{f}, figsave_type, 'GrammOptions', grammOptions{f}, 'OrderOptions', orderOptions{f}, 'LegOptions', legOptions{f});
             end
         end
     end
     
 end
 
-function plotDailies(pT, runType, yVals, yLabs, figName, varargin)
+function plotDailies(pT, runType, yVals, yLabs, figName, figsave_type, varargin)
     
     p = inputParser;
     addParameter(p, 'GrammOptions', {});             % For gramm initial options
@@ -137,10 +137,17 @@ function plotDailies(pT, runType, yVals, yLabs, figName, varargin)
             [row, col] = updateRowCol(row, col, 3);
         end
         g(1,2).facet_axes_handles.YLim=g(1,1).facet_axes_handles.YLim;
-        exportgraphics(f,figName);
-        disp(['saved figure: ', figName])
+        
+        for fst = 1:length(figsave_type)
+            if strcmp(figsave_type{fst}, '.pdf')
+                exportgraphics(f,[figName, figsave_type{fst}], 'ContentType','vector')
+            else
+                exportgraphics(f,[figName, figsave_type{fst}]);
+            end
+            disp(['saved figure: ', figName, figsave_type{fst}])
+        end
     catch
-        disp(['error encountered drawing figure: ', figName, ', aborted'])
+        disp(['error encountered drawing or saving figure: ', figName, ', aborted'])
     end
 
 end
