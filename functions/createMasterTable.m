@@ -7,7 +7,7 @@ function [mT] = createMasterTable(main_folder, beh_datapath, masterKey_flnm, exp
     opts = setvartype(opts,{'TagNumber','ID','Cage','Sex','Strain','TimeOfBehavior'},'categorical'); % Must be variables in the master key
     mKey=readtable(masterKey_flnm,opts);
     
-    % Import Experiment Key
+    % Import Experiment Keyp.
     expKey = readtable(experimentKey_flnm);
 
     % Deal with annoying formatting problems with dates from sheet
@@ -74,9 +74,10 @@ function [mT] = createMasterTable(main_folder, beh_datapath, masterKey_flnm, exp
                     sessionType = categorical("undefined");
                 else
                     % Read concentration & dose volume per dose from Experiment Key to calculate drug intake
+                    Weight = varTable.Weight;
                     Concentration = expKey.FentanylConcentration_ug_ml_(expKey_ind);
                     DoseVolume = expKey.VolumePerDose_mL_(expKey_ind);
-                    Intake = DoseVolume * Concentration * varTable.EarnedInfusions(height(varTable));
+                    Intake = (DoseVolume * Concentration * varTable.EarnedInfusions(height(varTable))) / (Weight/1000);
                     totalIntake = DoseVolume * Concentration * varTable.TotalInfusions(height(varTable));
                     Run = expKey.Run(expKey_ind);
                     sessionType = categorical(string(expKey.SessionType{expKey_ind}));

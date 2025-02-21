@@ -8,8 +8,12 @@ function [mTDL, mPressT, mDrugLT] = WithinSession_Processes(mT, dex, sub_dir, in
     mPressT = table;
     mDrugLT = table;
     
-    disp(['Running individual within-session intake analysis for ' num2str(height(mTDL)) ' sessions...']);  
+    wb = waitbar(0, ['Running individual within-session intake analysis... (0/' num2str(height(mTDL)) ')']);
     for i=1:height(mTDL)
+        
+        waitmessage = ['Running individual within-session intake analysis... (' num2str(i), '/' num2str(height(mTDL)) ')'];
+        waitbar(i/height(mTDL), wb, waitmessage);
+
         ET = mTDL.eventTime{i};
         EC = mTDL.eventCode{i};
         doseHE = mTDL.doseHE{i};
@@ -48,10 +52,10 @@ function [mTDL, mPressT, mDrugLT] = WithinSession_Processes(mT, dex, sub_dir, in
             mDrugLT = [mDrugLT; table(TagNumber, Session, DL, DLTime, Sex, Strain, sessionType)];
         end
         
-        if indivIntake_figs 
-            figpath = [sub_dir, indivIntakefigs_savepath, 'Tag', char(mTDL.TagNumber(i)), '_Session', char(string(mTDL.Session(i))), '_cumolDose_and_estBrainFent'];
-            indiv_sessionIntakeBrainFentFig({adj_rewLP/60, DLTime}, {cumulDoseHE, DL(:)*1000}, figpath, figsave_type);
-        end
+        % if indivIntake_figs 
+        %     figpath = [sub_dir, indivIntakefigs_savepath, 'Tag', char(mTDL.TagNumber(i)), '_Session', char(string(mTDL.Session(i))), '_cumolDose_and_estBrainFent'];
+        %     indiv_sessionIntakeBrainFentFig({adj_rewLP/60, DLTime}, {cumulDoseHE, DL(:)*1000}, figpath, figsave_type);
+        % end
     end
 
     if saveTabs
@@ -61,34 +65,46 @@ function [mTDL, mPressT, mDrugLT] = WithinSession_Processes(mT, dex, sub_dir, in
 
     if indivIntake_figs
         IDs=unique(mPressT.TagNumber);
-        for j=1:length(IDs)
-            figpath = [sub_dir, indivIntakefigs_savepath, 'Tag', char(IDs(j)), '_allSessionCumulDose'];
-            indiv_allSessionFig(mPressT, mPressT.TagNumber==IDs(j), 'adj_rewLP', "Time (m)", ...
-                                'cumulDoseHE', "Cumulative Responses", ...
-                                 ['ID: ' char(IDs(j))], 'Session', figpath, figsave_type, 'cumbin');
-
-            figpath = [sub_dir, indivIntakefigs_savepath, 'Tag', char(IDs(j)), '_allSessionEstBrainFent'];
-            indiv_allSessionFig(mDrugLT, mDrugLT.TagNumber==IDs(j), 'DLTime', "Time (m)", ...
-                                'DL', "Estimated Brain Fentanyl (pMOL)", ...
-                                 ['ID: ' char(IDs(j))], 'Session', figpath, figsave_type, 'line');
-        end
-
-        % if any(ismember(fieldnames(dex), 'BE'))
-        %     %function gramm_GroupFig(tab, xvar, yvar, xlab, ylab, colorGroup, lightGroup, subset, figpath, figsave_type, xtick, xticklab)
-        %     xtick = [0 90 180];
-        %     xticklab = ["0", "90", "180"];
-        %     for j = 1:length(IDs)
-        %         subset = (mPressT.TagNumber == IDs(j)) & (mPressT.sessionType == 'BehavioralEconomics');
-        %         if ~isempty(find(subset))
-        %             figpath = [sub_dir, indivIntakefigs_savepath, 'BE_cumulDose_overlay_Tag_', char(IDs(j))];
-        %             subTab = mPressT(subset, :);
-        %             gramm_GroupFig(subTab, "adj_rewLP", "cumulDoseHE", ...
-        %                            "Time (m)", "Cumulative Responses", ...
-        %                            "TagNumber", "Session", ones([height(subTab), 1]), ...
-        %                            figpath, figsave_type, xtick, xticklab);
-        %         end
-        %     end
+        % for j=1:length(IDs)
+        %     figpath = [sub_dir, indivIntakefigs_savepath, 'Tag', char(IDs(j)), '_allSessionCumulDose'];
+        %     indiv_allSessionFig(mPressT, mPressT.TagNumber==IDs(j), 'adj_rewLP', "Time (m)", ...
+        %                         'cumulDoseHE', "Cumulative Responses", ...
+        %                          ['ID: ' char(IDs(j))], 'Session', figpath, figsave_type, 'cumbin');
+        % 
+        %     figpath = [sub_dir, indivIntakefigs_savepath, 'Tag', char(IDs(j)), '_allSessionEstBrainFent'];
+        %     indiv_allSessionFig(mDrugLT, mDrugLT.TagNumber==IDs(j), 'DLTime', "Time (m)", ...
+        %                         'DL', "Estimated Brain Fentanyl (pMOL)", ...
+        %                          ['ID: ' char(IDs(j))], 'Session', figpath, figsave_type, 'line');
         % end
+
+        if any(ismember(fieldnames(dex), 'BE'))
+            %function gramm_GroupFig(tab, xvar, yvar, xlab, ylab, colorGroup, lightGroup, subset, figpath, figsave_type, xtick, xticklab)
+            xtick = [0 90 180];
+            xticklab = ["0", "90", "180"];
+            legOptions = {'lightness', 'Session'};
+            for j = 1:length(IDs)
+                % subset = (mPressT.TagNumber == IDs(j)) & (mPressT.sessionType == 'BehavioralEconomics');
+                % if ~isempty(find(subset))
+                %     figpath = [sub_dir, indivIntakefigs_savepath, 'BE_cumulDose_overlay_Tag_', char(IDs(j))];
+                %     subTab = mPressT(find(subset), :);
+                %     grammOptions = {'lightness', subTab.Session};
+                %     statOptions = {'normalization','cumcount','geom','stairs','edges',0:1:180};
+                %     pointOptions = {'markers',{'o','s'},'base_size',10}    
+                %     gramm_GroupFig(subTab, "adj_rewLP", "cumulDoseHE", "Time (m)", "Cumulative Responses", ...
+                %                    figpath, figsave_type, 'GrammOptions', grammOptions, 'LegOptions', legOptions, 'StatOptions', statOptions, 'PointOptions', pointOptions);
+                % end
+                subset = (mDrugLT.TagNumber == IDs(j)) & (mDrugLT.sessionType == 'BehavioralEconomics');
+                if ~isempty(find(subset))
+                    figpath = [sub_dir, indivIntakefigs_savepath, 'BE_estBrainFent_overlay_Tag_', char(IDs(j))];
+                    subTab = mDrugLT(find(subset), :);
+                    grammOptions = {'lightness', subTab.Session};
+                    statOptions = {'line'};
+                   
+                    gramm_GroupFig(subTab, "DLTime", "DL", "Time (m)", "Estimated Brain Fentanyl (pMOL)", ...
+                                   figpath, figsave_type, 'GrammOptions', grammOptions, 'LegOptions', legOptions);    
+                end
+            end
+        end
     end
     
     if groupIntake_figs    

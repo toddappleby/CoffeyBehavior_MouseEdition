@@ -33,18 +33,18 @@ firstHour = false; % true: acquire data from the first-hour of data and analyze 
 excludeData = true; % true: excludes data based on the 'RemoveSession' column of masterSheet
 acquisition_thresh = 10; % to be labeled as "Acquire", animal must achieve an average number of infusions in the second weak of Training sessions greater than this threshold
 
-run_BE_analysis = false;
+run_BE_analysis = true;
 run_withinSession_analysis = true;
-run_individualSusceptibility_analysis = false;
+run_individualSusceptibility_analysis = true;
 
 % FIGURE OPTIONS
 % Currently, if figures are generated they are also saved. 
-saveTabs = false; % true: save matlab tables of analyzed datasets
+saveTabs = true; % true: save matlab tables of analyzed datasets
 dailyFigs = false; % true: generate daily figures from dailySAFigures.m
 pubFigs = false; % true: generate publication figures from pubSAFigures.m
 indivIntake_figs = true; % true: generate figures for individual animal behavior across & within sessions
-groupIntake_figs = false; % true: generate figures grouped by sex, strain, etc. for animal behavior across & within sessions
-groupOralFentOutput_figs = false; % true: generate severity figures
+groupIntake_figs = true; % true: generate figures grouped by sex, strain, etc. for animal behavior across & within sessions
+groupOralFentOutput_figs = true; % true: generate severity figures
 figsave_type = {'.png', '.pdf'};
 
 % SAVE PATHS
