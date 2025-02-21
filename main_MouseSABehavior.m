@@ -15,6 +15,8 @@
 close all
 clear all
 
+disp('branch pull test')
+
 % IMPORT PATHS
 main_folder = pwd;
 cd(main_folder)
