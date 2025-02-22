@@ -1,8 +1,8 @@
 function [ivT] = GetMetrics(mT)
     
-    IVmetrics = ["ID", "Sex", "Strain", "Intake", "Seeking", "Association", "Escalation"...
+    IVmetrics = ["ID", "Sex", "Strain", "Acquire", "Intake", "Seeking", "Association", "Escalation"...
                  "Extinction", "Persistence", "Flexibility", "Relapse", "Recall"];  
-    numNonMets = 3; % refers to the first 3 elements of IVmetrics being labels rather than numeric metrics
+    numNonMets = 4; % refers to the first 3 elements of IVmetrics being labels rather than numeric metrics
     ID = unique(mT.TagNumber);
 
     % Individual Variable Table
@@ -16,6 +16,7 @@ function [ivT] = GetMetrics(mT)
         ivT.ID(i) = ID(i);
         ivT.Sex(i) = unique(mT.Sex(this_ID));
         ivT.Strain(i) = unique(mT.Strain(this_ID));
+        ivT.Acquire(i) = unique(mT.Acquire(this_ID));
         ivT.Intake(i) = nanmean(mT.Intake(this_ID & mT.sessionType == 'Training'));
         ivT.Seeking(i) = nanmean(mT.HeadEntries(this_ID &  mT.sessionType =='Training'));
         ivT.Association(i)= 1/log(nanmean(mT.Latency(this_ID & mT.sessionType == 'Training'))); 

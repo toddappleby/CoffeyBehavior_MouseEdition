@@ -1,6 +1,6 @@
 function [ivZT] = SeverityScore(ivT, includeER)
     % Z-Score & Severity Score
-    ivZT = ivT(:, {'ID', 'Sex', 'Strain'});
+    ivZT = ivT(:, {'ID', 'Sex', 'Strain', 'Acquire'});
     ivZT.Intake = zscore(ivT.Intake);
     ivZT.Seeking = zscore(ivT.Seeking);
     ivZT.Association = zscore(ivT.Association);
@@ -12,7 +12,7 @@ function [ivZT] = SeverityScore(ivT, includeER)
     end
 
     varnames = ivZT.Properties.VariableNames;
-    prednames = varnames(varnames ~= "ID" & varnames ~= "Sex" & varnames ~= "Strain");
+    prednames = varnames(varnames ~= "ID" & varnames ~= "Sex" & varnames ~= "Strain" & varnames ~= "Acquire");
 
     % Severity
     Severity = nansum(ivZT{:, prednames}')';
