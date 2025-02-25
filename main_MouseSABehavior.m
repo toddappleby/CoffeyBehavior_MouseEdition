@@ -26,8 +26,8 @@ BE_intake_canonical_flnm = '.\2024.12.09.BE Intake Canonical.xlsx'; % Key for dr
 experimentKey_flnm = '.\Experiment Key.xlsx'; % Key for
 
 % MISC. SETTINGS
-runNum = 'all'; % options: 'all' or desired runs separated by underscores (e.g. '1', '1_3_4', '3_2')
-runType = 'all'; % options: 'ER' (Extinction Reinstatement), 'BE' (Behavioral Economics), 'SA' (Self Administration)
+runNum = '4'; % options: 'all' or desired runs separated by underscores (e.g. '1', '1_3_4', '3_2')
+runType = 'ER'; % options: 'ER' (Extinction Reinstatement), 'BE' (Behavioral Economics), 'SA' (Self Administration)
 createNewMasterTable = false; % true: generates & saves a new master table from medPC files in datapath. false: reads mT in from masterTable_flnm if set to false, otherwise 
 firstHour = false; % true: acquire data from the first-hour of data and analyze in addition to the full sessions
 excludeData = true; % true: excludes data based on the 'RemoveSession' column of masterSheet
@@ -263,7 +263,7 @@ end
 %                   (separately calculated and saved for ER and non ER groups)
 
 if run_individualSusceptibility_analysis
-    
+
     % subgroups of z-scored data to run correlations across
     corrGroups = {{{'all'}}, ...
                   {{'Strain', 'c57'}}, ...
