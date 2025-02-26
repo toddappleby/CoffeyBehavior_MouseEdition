@@ -35,11 +35,12 @@ function [mTDL, mPressT, mDrugLT] = WithinSession_Processes(mT, dex, sub_dir, in
         end
         
         infDur = 4; % duration of infusion in seconds
-        sessDur = 180; % duration of sessionin minutes
-        [DL, DLTime] = pharmacokineticsMouseOralFent('infusions',[rewHE*1000 (rewHE+(doseHE*infDur*1000))],'duration',sessDur,'type',4,'weight',mT.Weight(i)./1000,'mg_mL',conc/100,'mL_S',mT.DoseVolume(i)/infDur);
+        sessDur = 180; % duration of session in minutes
+
+        [DL, DLTime] = pharmacokineticsMouseOralFent('infusions',[rewHE*1000 (rewHE+(doseHE*infDur*1000))],'duration',sessDur,'type',4,'weight',mTDL.Weight(i)./1000,'mg_mL',conc/100,'mL_S',mTDL.DoseVolume(i)/infDur);
         DL = imresize(DL', [length(DLTime),1]);
         DLTime = DLTime';
-    
+
         TagNumber = repmat([mTDL.TagNumber(i)],length(DL),1);
         Session = repmat([mTDL.Session(i)],length(DL),1);
         Sex = repmat([mTDL.Sex(i)],length(DL),1);
@@ -51,12 +52,13 @@ function [mTDL, mPressT, mDrugLT] = WithinSession_Processes(mT, dex, sub_dir, in
         else
             mDrugLT = [mDrugLT; table(TagNumber, Session, DL, DLTime, Sex, Strain, sessionType)];
         end
-        
-        % if indivIntake_figs 
-        %     figpath = [sub_dir, indivIntakefigs_savepath, 'Tag', char(mTDL.TagNumber(i)), '_Session', char(string(mTDL.Session(i))), '_cumolDose_and_estBrainFent'];
-        %     indiv_sessionIntakeBrainFentFig({adj_rewLP/60, DLTime}, {cumulDoseHE, DL(:)*1000}, figpath, figsave_type);
-        % end
+
+        if indivIntake_figs 
+            figpath = [sub_dir, indivIntakefigs_savepath, 'Tag', char(mTDL.TagNumber(i)), '_Session', char(string(mTDL.Session(i))), '_cumolDose_and_estBrainFent'];
+            indiv_sessionIntakeBrainFentFig({adj_rewLP/60, DLTime}, {cumulDoseHE, DL(:)*1000}, figpath, figsave_type);
+        end
     end
+    close(wb)
 
     if saveTabs
         writeTabs(mPressT, [sub_dir, tabs_savepath, 'Within_Session_Responses'], {'.mat'})
@@ -65,34 +67,34 @@ function [mTDL, mPressT, mDrugLT] = WithinSession_Processes(mT, dex, sub_dir, in
 
     if indivIntake_figs
         IDs=unique(mPressT.TagNumber);
-        % for j=1:length(IDs)
-        %     figpath = [sub_dir, indivIntakefigs_savepath, 'Tag', char(IDs(j)), '_allSessionCumulDose'];
-        %     indiv_allSessionFig(mPressT, mPressT.TagNumber==IDs(j), 'adj_rewLP', "Time (m)", ...
-        %                         'cumulDoseHE', "Cumulative Responses", ...
-        %                          ['ID: ' char(IDs(j))], 'Session', figpath, figsave_type, 'cumbin');
-        % 
-        %     figpath = [sub_dir, indivIntakefigs_savepath, 'Tag', char(IDs(j)), '_allSessionEstBrainFent'];
-        %     indiv_allSessionFig(mDrugLT, mDrugLT.TagNumber==IDs(j), 'DLTime', "Time (m)", ...
-        %                         'DL', "Estimated Brain Fentanyl (pMOL)", ...
-        %                          ['ID: ' char(IDs(j))], 'Session', figpath, figsave_type, 'line');
-        % end
+        for j=1:length(IDs)
+            figpath = [sub_dir, indivIntakefigs_savepath, 'Tag', char(IDs(j)), '_allSessionCumulDose'];
+            indiv_allSessionFig(mPressT, mPressT.TagNumber==IDs(j), 'adj_rewLP', "Time (m)", ...
+                                'cumulDoseHE', "Cumulative Responses", ...
+                                 ['ID: ' char(IDs(j))], 'Session', figpath, figsave_type, 'cumbin');
+
+            figpath = [sub_dir, indivIntakefigs_savepath, 'Tag', char(IDs(j)), '_allSessionEstBrainFent'];
+            indiv_allSessionFig(mDrugLT, mDrugLT.TagNumber==IDs(j), 'DLTime', "Time (m)", ...
+                                'DL', "Estimated Brain Fentanyl (pMOL)", ...
+                                 ['ID: ' char(IDs(j))], 'Session', figpath, figsave_type, 'line');
+        end
 
         if any(ismember(fieldnames(dex), 'BE'))
-            %function gramm_GroupFig(tab, xvar, yvar, xlab, ylab, colorGroup, lightGroup, subset, figpath, figsave_type, xtick, xticklab)
+
             xtick = [0 90 180];
             xticklab = ["0", "90", "180"];
             legOptions = {'lightness', 'Session'};
             for j = 1:length(IDs)
-                % subset = (mPressT.TagNumber == IDs(j)) & (mPressT.sessionType == 'BehavioralEconomics');
-                % if ~isempty(find(subset))
-                %     figpath = [sub_dir, indivIntakefigs_savepath, 'BE_cumulDose_overlay_Tag_', char(IDs(j))];
-                %     subTab = mPressT(find(subset), :);
-                %     grammOptions = {'lightness', subTab.Session};
-                %     statOptions = {'normalization','cumcount','geom','stairs','edges',0:1:180};
-                %     pointOptions = {'markers',{'o','s'},'base_size',10}    
-                %     gramm_GroupFig(subTab, "adj_rewLP", "cumulDoseHE", "Time (m)", "Cumulative Responses", ...
-                %                    figpath, figsave_type, 'GrammOptions', grammOptions, 'LegOptions', legOptions, 'StatOptions', statOptions, 'PointOptions', pointOptions);
-                % end
+                subset = (mPressT.TagNumber == IDs(j)) & (mPressT.sessionType == 'BehavioralEconomics');
+                if ~isempty(find(subset))
+                    figpath = [sub_dir, indivIntakefigs_savepath, 'BE_cumulDose_overlay_Tag_', char(IDs(j))];
+                    subTab = mPressT(find(subset), :);
+                    grammOptions = {'lightness', subTab.Session};
+                    statOptions = {'normalization','cumcount','geom','stairs','edges',0:1:180};
+                    pointOptions = {'markers',{'o','s'},'base_size',10};  
+                    gramm_GroupFig(subTab, "adj_rewLP", "cumulDoseHE", "Time (m)", "Cumulative Responses", ...
+                                   figpath, figsave_type, 'GrammOptions', grammOptions, 'LegOptions', legOptions, 'StatOptions', statOptions, 'PointOptions', pointOptions);
+                end
                 subset = (mDrugLT.TagNumber == IDs(j)) & (mDrugLT.sessionType == 'BehavioralEconomics');
                 if ~isempty(find(subset))
                     figpath = [sub_dir, indivIntakefigs_savepath, 'BE_estBrainFent_overlay_Tag_', char(IDs(j))];

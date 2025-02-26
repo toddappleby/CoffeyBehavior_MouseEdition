@@ -36,7 +36,7 @@ acquisition_testPeriod = {'Training', 'last', 5}; % determines sessions to avera
 pAcq = true; % true: plot aquisition histogram to choose threshold 
 
 run_BE_analysis = false;
-run_withinSession_analysis = false;
+run_withinSession_analysis = true;
 run_individualSusceptibility_analysis = true;
 
 % FIGURE OPTIONS
@@ -45,7 +45,7 @@ saveTabs = false; % true: save matlab tables of analyzed datasets
 dailyFigs = false; % true: generate daily figures from dailySAFigures.m
 pubFigs = false; % true: generate publication figures from pubSAFigures.m
 indivIntake_figs = false; % true: generate figures for individual animal behavior across & within sessions
-groupIntake_figs = false; % true: generate figures grouped by sex, strain, etc. for animal behavior across & within sessions
+groupIntake_figs = true; % true: generate figures grouped by sex, strain, etc. for animal behavior across & within sessions
 groupOralFentOutput_figs = true; % true: generate severity figures
 figsave_type = {'.png', '.pdf'};
 
