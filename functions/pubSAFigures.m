@@ -29,8 +29,9 @@ for rt = 1:length(runType)
     legendOptions{fnum} = {'x','Strain'};
     colorOptions{fnum} = {'hue_range',[25 385],'lightness_range',[95 60],'chroma_range',[50 70]};
     donut{fnum} = true;
+    forceY{fnum} = false;
 
-    plotPubFig(pT, expStr, yVars{fnum}, yLabs{fnum}, cVars{fnum}, subInds{fnum}, titles, figNames{fnum}, figsave_type, donut{fnum}, ...
+    plotPubFig(pT, expStr, yVars{fnum}, yLabs{fnum}, forceY{fnum}, cVars{fnum}, subInds{fnum}, titles, figNames{fnum}, figsave_type, donut{fnum}, ...
         'GrammOptions', grammOptions{fnum}, 'ColorOptions', colorOptions{fnum}, ...
         'OrderOptions', orderOptions{fnum}, 'LegendOptions', legendOptions{fnum});
 
@@ -38,8 +39,8 @@ for rt = 1:length(runType)
     fnum = 2;
     figNames{fnum} = fullfile(figFold,[expStr, '_ActiveLeverC57Acquire']);
     subset = {{'Strain', {'c57'}} ...
-              {'Acquire', {'Acquire'}} ...
-             };
+        {'Acquire', {'Acquire'}} ...
+        };
     subInds{fnum} = getSubInds(pT, subset);
     yVars{fnum} = 'ActiveLever';
     yLabs{fnum} = 'Active Lever';
@@ -49,11 +50,12 @@ for rt = 1:length(runType)
     legendOptions{fnum} = {'x','Sex'};
     colorOptions{fnum} = {'hue_range',[40 310],'lightness_range',[85 35],'chroma_range',[30 70]};
     donut{fnum} = false;
+    forceY{fnum} = [200 200 200 200];
 
-    plotPubFig(pT, expStr, yVars{fnum}, yLabs{fnum}, cVars{fnum}, subInds{fnum}, titles, figNames{fnum}, figsave_type, donut{fnum}, ...
+    plotPubFig(pT, expStr, yVars{fnum}, yLabs{fnum}, forceY{fnum}, cVars{fnum}, subInds{fnum}, titles, figNames{fnum}, figsave_type, donut{fnum}, ...
         'GrammOptions', grammOptions{fnum}, 'ColorOptions', colorOptions{fnum}, ...
         'OrderOptions', orderOptions{fnum}, 'LegendOptions', legendOptions{fnum});
-
+    
     %% CD1 Active Lever, Acquirers
     fnum = 3;
     figNames{fnum} = fullfile(figFold,[expStr, '_ActiveLeverCD1Acquire']);
@@ -69,11 +71,12 @@ for rt = 1:length(runType)
     legendOptions{fnum} = {'x','Sex'};
     colorOptions{fnum} = {'hue_range',[85 -200],'lightness_range',[85 75],'chroma_range',[75 90]};
     donut{fnum} = false;
+    forceY{fnum} = [200 200 200 200];
 
-    plotPubFig(pT, expStr, yVars{fnum}, yLabs{fnum}, cVars{fnum}, subInds{fnum}, titles, figNames{fnum}, figsave_type, donut{fnum}, ...
+    plotPubFig(pT, expStr, yVars{fnum}, yLabs{fnum}, forceY{fnum}, cVars{fnum}, subInds{fnum}, titles, figNames{fnum}, figsave_type, donut{fnum}, ...
         'GrammOptions', grammOptions{fnum}, 'ColorOptions', colorOptions{fnum}, ...
         'OrderOptions', orderOptions{fnum}, 'LegendOptions', legendOptions{fnum});
-
+    
     %% C57 Active Lever
     % SS note: Bar graph axes being set weird compared to the rest, why?
     fnum = 4;
@@ -88,11 +91,12 @@ for rt = 1:length(runType)
     legendOptions{fnum} = {'x','Sex'};
     colorOptions{fnum} = {'hue_range',[40 310],'lightness_range',[95 65],'chroma_range',[50 90]};
     donut{fnum} = true;
+    forceY{fnum} = false;
 
-    plotPubFig(pT, expStr, yVars{fnum}, yLabs{fnum}, cVars{fnum}, subInds{fnum}, titles, figNames{fnum}, figsave_type, donut{fnum}, ...
+    plotPubFig(pT, expStr, yVars{fnum}, yLabs{fnum}, forceY{fnum}, cVars{fnum}, subInds{fnum}, titles, figNames{fnum}, figsave_type, donut{fnum}, ...
         'GrammOptions', grammOptions{fnum}, 'ColorOptions', colorOptions{fnum}, ...
         'OrderOptions', orderOptions{fnum}, 'LegendOptions', legendOptions{fnum});
-
+    
     %% CD1 Active Lever
     % SS note: Bar graph axes being set weird compared to the rest, why?
     fnum = 5;
@@ -107,11 +111,11 @@ for rt = 1:length(runType)
     legendOptions{fnum} = {'x','Sex'};
     colorOptions{fnum} = {'hue_range',[85 -200],'lightness_range',[85 75],'chroma_range',[75 90]};
     donut{fnum} = true;
+    forceY{fnum} = false;
 
-    plotPubFig(pT, expStr, yVars{fnum}, yLabs{fnum},  cVars{fnum}, subInds{fnum}, titles, figNames{fnum}, figsave_type, donut{fnum}, ...
+    plotPubFig(pT, expStr, yVars{fnum}, yLabs{fnum}, forceY{fnum}, cVars{fnum}, subInds{fnum}, titles, figNames{fnum}, figsave_type, donut{fnum}, ...
         'GrammOptions', grammOptions{fnum}, 'ColorOptions', colorOptions{fnum}, ...
         'OrderOptions', orderOptions{fnum}, 'LegendOptions', legendOptions{fnum});
-
 
     %% C57 Inactive Lever, Acquirers
     fnum = 6;
@@ -128,8 +132,9 @@ for rt = 1:length(runType)
     legendOptions{fnum} = {'x','Sex'};
     colorOptions{fnum} = {'hue_range',[40 310],'lightness_range',[85 35],'chroma_range',[30 70]};
     donut{fnum} = false;
+    forceY{fnum} = [200 200 200 200];
 
-    plotPubFig(pT, expStr, yVars{fnum}, yLabs{fnum}, cVars{fnum}, subInds{fnum}, titles, figNames{fnum}, figsave_type, donut{fnum}, ...
+    plotPubFig(pT, expStr, yVars{fnum}, yLabs{fnum}, forceY{fnum}, cVars{fnum}, subInds{fnum}, titles, figNames{fnum}, figsave_type, donut{fnum}, ...
         'GrammOptions', grammOptions{fnum}, 'ColorOptions', colorOptions{fnum}, ...
         'OrderOptions', orderOptions{fnum}, 'LegendOptions', legendOptions{fnum});
 
@@ -148,10 +153,12 @@ for rt = 1:length(runType)
     legendOptions{fnum} = {'x','Sex'};
     colorOptions{fnum} = {'hue_range',[85 -200],'lightness_range',[85 75],'chroma_range',[75 90]};
     donut{fnum} = false;
+    forceY{fnum} = [200 200 200 200];
 
-    plotPubFig(pT, expStr, yVars{fnum}, yLabs{fnum}, cVars{fnum}, subInds{fnum}, titles, figNames{fnum}, figsave_type, donut{fnum}, ...
+    plotPubFig(pT, expStr, yVars{fnum}, yLabs{fnum}, forceY{fnum}, cVars{fnum}, subInds{fnum}, titles, figNames{fnum}, figsave_type, donut{fnum}, ...
         'GrammOptions', grammOptions{fnum}, 'ColorOptions', colorOptions{fnum}, ...
         'OrderOptions', orderOptions{fnum}, 'LegendOptions', legendOptions{fnum});
+    
     %% C57 Inactive Lever
     % SS note: Bar graph axes being set weird compared to the rest, why?
     fnum = 8;
@@ -166,8 +173,9 @@ for rt = 1:length(runType)
     legendOptions{fnum} = {'x','Sex'};
     colorOptions{fnum} = {'hue_range',[40 310],'lightness_range',[95 65],'chroma_range',[50 90]};
     donut{fnum} = false;
+    forceY{fnum} = false;
 
-    plotPubFig(pT, expStr, yVars{fnum}, yLabs{fnum}, cVars{fnum}, subInds{fnum}, titles, figNames{fnum}, figsave_type, donut{fnum}, ...
+    plotPubFig(pT, expStr, yVars{fnum}, yLabs{fnum}, forceY{fnum}, cVars{fnum}, subInds{fnum}, titles, figNames{fnum}, figsave_type, donut{fnum}, ...
         'GrammOptions', grammOptions{fnum}, 'ColorOptions', colorOptions{fnum}, ...
         'OrderOptions', orderOptions{fnum}, 'LegendOptions', legendOptions{fnum});
 
@@ -185,8 +193,9 @@ for rt = 1:length(runType)
     legendOptions{fnum} = {'x','Sex'};
     colorOptions{fnum} = {'hue_range',[85 -200],'lightness_range',[85 75],'chroma_range',[75 90]};
     donut{fnum} = false;
+    forceY{fnum} = false;
 
-    plotPubFig(pT, expStr, yVars{fnum}, yLabs{fnum}, cVars{fnum}, subInds{fnum}, titles, figNames{fnum}, figsave_type, donut{fnum}, ...
+    plotPubFig(pT, expStr, yVars{fnum}, yLabs{fnum}, forceY{fnum}, cVars{fnum}, subInds{fnum}, titles, figNames{fnum}, figsave_type, donut{fnum}, ...
         'GrammOptions', grammOptions{fnum}, 'ColorOptions', colorOptions{fnum}, ...
         'OrderOptions', orderOptions{fnum}, 'LegendOptions', legendOptions{fnum});
 
@@ -205,8 +214,9 @@ for rt = 1:length(runType)
     legendOptions{fnum} = {'x','Sex'};
     colorOptions{fnum} = {'hue_range',[40 310],'lightness_range',[95 65],'chroma_range',[50 90]};
     donut{fnum} = false;
+    forceY{fnum} = [600 600 600 600];
 
-    plotPubFig(pT, expStr, yVars{fnum}, yLabs{fnum}, cVars{fnum}, subInds{fnum}, titles, figNames{fnum}, figsave_type, donut{fnum}, ...
+    plotPubFig(pT, expStr, yVars{fnum}, yLabs{fnum}, forceY{fnum}, cVars{fnum}, subInds{fnum}, titles, figNames{fnum}, figsave_type, donut{fnum}, ...
         'GrammOptions', grammOptions{fnum}, 'ColorOptions', colorOptions{fnum}, ...
         'OrderOptions', orderOptions{fnum}, 'LegendOptions', legendOptions{fnum});
 
@@ -225,8 +235,9 @@ for rt = 1:length(runType)
     legendOptions{fnum} = {'x','Sex'};
     colorOptions{fnum} = {'hue_range',[85 -200],'lightness_range',[85 75],'chroma_range',[75 90]};
     donut{fnum} = false;
+    forceY{fnum} = [600 600 600 600];
 
-    plotPubFig(pT, expStr, yVars{fnum}, yLabs{fnum}, cVars{fnum}, subInds{fnum}, titles, figNames{fnum}, figsave_type, donut{fnum}, ...
+    plotPubFig(pT, expStr, yVars{fnum}, yLabs{fnum}, forceY{fnum}, cVars{fnum}, subInds{fnum}, titles, figNames{fnum}, figsave_type, donut{fnum}, ...
         'GrammOptions', grammOptions{fnum}, 'ColorOptions', colorOptions{fnum}, ...
         'OrderOptions', orderOptions{fnum}, 'LegendOptions', legendOptions{fnum});
 
@@ -246,11 +257,12 @@ for rt = 1:length(runType)
     legendOptions{fnum} = {'x','Sex'};
     colorOptions{fnum} = {'hue_range',[40 310],'lightness_range',[95 65],'chroma_range',[50 90]};
     donut{fnum} = false;
+    forceY{fnum} = [200 200 200 200];
 
-    plotPubFig(pT, expStr, yVars{fnum}, yLabs{fnum}, cVars{fnum}, subInds{fnum}, titles, figNames{fnum}, figsave_type, donut{fnum}, ...
+    plotPubFig(pT, expStr, yVars{fnum}, yLabs{fnum}, forceY{fnum}, cVars{fnum}, subInds{fnum}, titles, figNames{fnum}, figsave_type, donut{fnum}, ...
         'GrammOptions', grammOptions{fnum}, 'ColorOptions', colorOptions{fnum}, ...
         'OrderOptions', orderOptions{fnum}, 'LegendOptions', legendOptions{fnum});
-
+  
     %% CD1 Latency, Acquirers
     fnum = 13;
     figNames{fnum} = fullfile(figFold,[expStr, '_LatencyCD1Acquire']);
@@ -266,8 +278,9 @@ for rt = 1:length(runType)
     legendOptions{fnum} = {'x','Sex'};
     colorOptions{fnum} = {'hue_range',[85 -200],'lightness_range',[85 75],'chroma_range',[75 90]};
     donut{fnum} = false;
+    forceY{fnum} = [200 200 200 200];
 
-    plotPubFig(pT, expStr, yVars{fnum}, yLabs{fnum}, cVars{fnum}, subInds{fnum}, titles, figNames{fnum}, figsave_type, donut{fnum}, ...
+    plotPubFig(pT, expStr, yVars{fnum}, yLabs{fnum}, forceY{fnum}, cVars{fnum}, subInds{fnum}, titles, figNames{fnum}, figsave_type, donut{fnum}, ...
         'GrammOptions', grammOptions{fnum}, 'ColorOptions', colorOptions{fnum}, ...
         'OrderOptions', orderOptions{fnum}, 'LegendOptions', legendOptions{fnum});
 
@@ -275,8 +288,8 @@ for rt = 1:length(runType)
     fnum = 14;
     figNames{fnum} = fullfile(figFold,[expStr, '_IntakeC57Acquire']);
     subset = {{'Strain', {'c57'}} ...
-              {'Acquire', {'Acquire'}} ...
-             };
+        {'Acquire', {'Acquire'}} ...
+        };
     subInds{fnum} = getSubInds(pT, subset);
     yVars{fnum} = 'Intake';
     yLabs{fnum} = 'Fentanyl Intake (ug/kg)';
@@ -286,8 +299,9 @@ for rt = 1:length(runType)
     legendOptions{fnum} = {'x','Sex'};
     colorOptions{fnum} = {'hue_range',[40 310],'lightness_range',[95 65],'chroma_range',[50 90]};
     donut{fnum} = false;
+    forceY{fnum} = [4000 4000 4000 4000];
 
-    plotPubFig(pT, expStr, yVars{fnum}, yLabs{fnum}, cVars{fnum}, subInds{fnum}, titles, figNames{fnum}, figsave_type, donut{fnum}, ...
+    plotPubFig(pT, expStr, yVars{fnum}, yLabs{fnum}, forceY{fnum}, cVars{fnum}, subInds{fnum}, titles, figNames{fnum}, figsave_type, donut{fnum}, ...
         'GrammOptions', grammOptions{fnum}, 'ColorOptions', colorOptions{fnum}, ...
         'OrderOptions', orderOptions{fnum}, 'LegendOptions', legendOptions{fnum});
 
@@ -306,8 +320,9 @@ for rt = 1:length(runType)
     legendOptions{fnum} = {'x','Sex'};
     colorOptions{fnum} = {'hue_range',[85 -200],'lightness_range',[85 75],'chroma_range',[75 90]};
     donut{fnum} = false;
+    forceY{fnum} = [4000 4000 4000 4000];
 
-    plotPubFig(pT, expStr, yVars{fnum}, yLabs{fnum}, cVars{fnum}, subInds{fnum}, titles, figNames{fnum}, figsave_type, donut{fnum}, ...
+    plotPubFig(pT, expStr, yVars{fnum}, yLabs{fnum}, forceY{fnum}, cVars{fnum}, subInds{fnum}, titles, figNames{fnum}, figsave_type, donut{fnum}, ...
         'GrammOptions', grammOptions{fnum}, 'ColorOptions', colorOptions{fnum}, ...
         'OrderOptions', orderOptions{fnum}, 'LegendOptions', legendOptions{fnum});
 
@@ -315,7 +330,7 @@ end
 end
 
 %%
-function [g] = plotPubFig(pT, runType, yVar, yLab, cVar, subInd, titles, figName, figsave_type, donut, varargin)
+function [g] = plotPubFig(pT, runType, yVar, yLab, forceY, cVar, subInd, titles, figName, figsave_type, donut, varargin)
     % try
     p = inputParser;
     addParameter(p, 'GrammOptions', {});            
@@ -327,177 +342,200 @@ function [g] = plotPubFig(pT, runType, yVar, yLab, cVar, subInd, titles, figName
     
     if runType == 'ER'
         sp_subInd = {subInd & (pT.sessionType=='PreTraining' | pT.sessionType=='Training'), ...
-                     subInd & (pT.sessionType=='PreTraining' | pT.sessionType=='Training') & pT.Session>14, ...
-                     subInd & (pT.sessionType=='Extinction'), ...
-                     subInd & pT.sessionType=='Reinstatement'};
+            subInd & (pT.sessionType=='PreTraining' | pT.sessionType=='Training') & pT.Session>14, ...
+            subInd & (pT.sessionType=='Extinction'), ...
+            subInd & pT.sessionType=='Reinstatement'};
         xLim = {[0, 15.5], [0.5 2.5], [15.5 25.5], [0.5 2.5]};
     elseif runType == 'BE'
         sp_subInd = {subInd & (pT.sessionType=='PreTraining' | pT.sessionType=='Training'), ...
-                     subInd & (pT.sessionType=='PreTraining' | pT.sessionType=='Training') & pT.Session>14, ...
-                     subInd & (pT.sessionType=='BehavioralEconomics'), ...
-                     subInd & (pT.sessionType=='ReTraining')};
+            subInd & (pT.sessionType=='PreTraining' | pT.sessionType=='Training') & pT.Session>14, ...
+            subInd & (pT.sessionType=='BehavioralEconomics'), ...
+            subInd & (pT.sessionType=='ReTraining')};
         xLim = {[0, 15.5], [0.5 2.5], [15.5 20.5], [0.5 2.5]};
     elseif runType == 'SA'
         sp_subInd = {subInd & (pT.sessionType=='PreTraining' | pT.sessionType=='Training'), ...
-                     subInd & (pT.sessionType=='PreTraining' | pT.sessionType=='Training') & pT.Session>14};
+            subInd & (pT.sessionType=='PreTraining' | pT.sessionType=='Training') & pT.Session>14};
         xLim = {[0, 15.5], [0.5 2.5]};
     end
     
     stat_set = {{'geom',{'black_errorbar','point','line'},'type','sem','dodge',0,'setylim',1,'width',1}, ...
         {'geom',{'black_errorbar','bar'},'type','sem','dodge',1.75,'width',1.5}};
     point_set = {{'base_size', 9}, {'base_size', 6}};
-
-    clear g
-    
-    if ~all(arrayfun(@(x) isempty(find(sp_subInd{x}, 1)), 1:length(sp_subInd)))
-    
-        if length(titles)==2
-            f1=figure('Position',[1 300 600 300]);
-        else
-            f1=figure('Position',[1 300 1200 300]);
-        end
-    
-        for sp = 1:length(sp_subInd)
-            if ~isempty(find(sp_subInd{sp}, 1))
-                if mod(sp,2) == 1
-                    g(1,sp)=gramm('x',pT.Session,'y',pT.(yVar),'subset', sp_subInd{sp}, p.Results.GrammOptions{:});
-                    g(1,sp).stat_summary(stat_set{1}{:});
-                    g(1,sp).set_point_options('markers',{'o','s'}, point_set{1}{:});
-                    g(1,sp).set_names('x','Session','y', yLab,'color',cVar);
-                    g(1,sp).no_legend;
-                elseif mod(sp,2) == 0
-                    g(1,sp)=gramm('x', pT.(cVar),'y', pT.(yVar), 'subset', sp_subInd{sp}, p.Results.GrammOptions{:});
-                    g(1,sp).stat_summary(stat_set{2}{:});
-                    g(1,sp).set_point_options('markers',{'o','s'}, point_set{2}{:});
-                    g(1,sp).geom_jitter('alpha',.6,'dodge',1.75,'width',0.05);
-                    g(1,sp).set_names(p.Results.LegendOptions{:});
-                end
-                g(1,sp).set_text_options('font','Helvetica','base_size',13,'legend_scaling',.75,'legend_title_scaling',.75);
-                g(1,sp).set_color_options(p.Results.ColorOptions{:});
-                g(1,sp).set_order_options(p.Results.OrderOptions{:});
-                g(1,sp).set_title(titles{sp});
-            end
-        end  
-
-        g.draw;
-        
-        yMax = zeros([4,1]);
-        for sp = 1:length(sp_subInd)
-            if ~isempty(find(sp_subInd{sp}, 1))
-                for s = 1:length(g(1,sp).results.stat_summary)
-                    maxStat(s) = nanmax(g(1,sp).results.stat_summary(s).yci(:));
-                end
-                yMax(sp)=nanmax(maxStat);
-            end
-        end   
-        yMax = (ceil(yMax/10)*10)+10;
-        yMax(1:2)=max(yMax(1:2));
-        if length(yMax)==4
-            yMax(3:4)=max(yMax(3:4));
-        end
-        
-        for sp = 1:length(sp_subInd)
-            if ~isempty(find(sp_subInd{sp},1))
-                g(1,sp).axe_property('LineWidth', 1.5, 'XLim', xLim{sp}, 'YLim', [0 yMax(sp)], 'TickDir','out');
-            
-                % Title
-                set(g(1,sp).title_axe_handle.Children ,'FontSize',12);
-                
-                % Marker Manipulation
-                if mod(sp,2) == 1
-                    for ss = 1:length(g(1,sp).results.stat_summary)
-                        set(g(1,sp).results.stat_summary(ss).point_handle,'MarkerEdgeColor',[0 0 0]);
-                    end
-                elseif mod(sp,2) == 0
-                    for ss = 1:length(g(1,sp).results.stat_summary)
-                        set(g(1,sp).results.geom_jitter_handle(ss),'MarkerEdgeColor',[0 0 0]);
-                        set(g(1,sp).results.stat_summary(ss).bar_handle,'EdgeColor',[0 0 0]);
-                    end
-                end
-            end
-        end
-        
-        % Axes edits
-        if ~isempty(find(sp_subInd{1}, 1))
-            set(g(1,1).facet_axes_handles,'YLim',[0 yMax(1)],'XLim',[0 15.5]);
-        end
-    
-        if ~isempty(find(sp_subInd{2}, 1))
-            set(g(1,2).facet_axes_handles,'YColor',[1 1 1]);
-            set(g(1,2).facet_axes_handles,'YLabel',[],'YTick',[]);
-            pos1=g(1,2).facet_axes_handles.OuterPosition;
-            set(g(1,2).facet_axes_handles,'OuterPosition',[pos1(1)-.04,pos1(2),pos1(3)-.04,pos1(4)]);
-            pos2=g(1,2).title_axe_handle.OuterPosition;
-            set(g(1,2).title_axe_handle,'OuterPosition',[pos2(1)-.05,pos2(2),pos2(3),pos2(4)]);
-            
-            if strcmp(cVar,'Strain')
-                set(g(1,2).facet_axes_handles,'YLim',[0 yMax(2)],'XTickLabel',{'cd1','c57'});
-            elseif strcmp(cVar,'Sex')
-                set(g(1,2).facet_axes_handles,'YLim',[0 yMax(2)],'XTickLabel',{char(9792),char(9794)});
-            end
-        end
-        
-        if length(sp_subInd) > 2
-            
-            if ~isempty(find(sp_subInd{4}, 1))
-                % Remove & Move Axes
-                set(g(1,4).facet_axes_handles,'YColor',[1 1 1]);
-                set(g(1,4).facet_axes_handles,'YLabel',[],'YTick',[]);
-                pos3=g(1,4).facet_axes_handles.OuterPosition;
-                set(g(1,4).facet_axes_handles,'OuterPosition',[pos3(1)-.04,pos3(2),pos3(3)-.04,pos3(4)]);
-                pos4=g(1,4).title_axe_handle.OuterPosition;
-                set(g(1,4).title_axe_handle,'OuterPosition',[pos4(1)-.05,pos4(2),pos4(3),pos4(4)]);
-                if strcmp(cVar,'Strain')
-                    set(g(1,4).facet_axes_handles,'YLim',[0 yMax(4)],'XTickLabel',{'cd1','c57'});
-                elseif strcmp(cVar,'Sex')
-                    set(g(1,4).facet_axes_handles,'YLim',[0 yMax(4)],'XTickLabel',{char(9792),char(9794)});
-                end
-            end
-
-            if ~isempty(find(sp_subInd{3}, 1))
-                pos5=g(1,3).facet_axes_handles.OuterPosition;
-                set(g(1,3).facet_axes_handles,'OuterPosition',[pos5(1),pos5(2),pos5(3)-.065,pos5(4)]);
-                pos6=g(1,3).title_axe_handle.OuterPosition;
-                set(g(1,3).title_axe_handle,'OuterPosition',[pos6(1)+.01,pos6(2),pos4(3),pos4(4)]);
-                % Axes Limits
-                if runType == 'ER'
-                    set(g(1,3).facet_axes_handles,'YLim',[0 yMax(3)],'XLim',[15 25.5],'XTick',[16 20 25],'XTickLabel',{'1','5','10'});
-                elseif runType == 'BE'
-                    set(g(1,3).facet_axes_handles,'YLim',[0 yMax(3)],'XLim',[15 20.5],'XTick',[16 18 20],'XTickLabel',{'1','3','5'});
-                end
-            end
-        
-        end
-        
-        % Export Figure
-        for fst = 1:length(figsave_type)
-            if strcmp(figsave_type{fst}, '.pdf')
-                exportgraphics(gcf,[figName, figsave_type{fst}], 'ContentType','vector')
-            else
-                exportgraphics(gcf,[figName, figsave_type{fst}]);
-            end
-            disp(['saved figure: ', figName, figsave_type{fst}])
-        end
-        
-        if donut
-            plotDonut(pT, subInd, g, figName, figsave_type)
-        end
+    if length(titles)==2
+        f1=figure('Position',[1 300 600 300]);
     else
-        disp(['no data to plot for figure: ', figName])
+        f1=figure('Position',[1 300 1200 300]);
+    end
+    clear g;
+    yMax = 0;
+    for sp = 1:length(sp_subInd)
+        if mod(sp,2) == 1
+            g(1,sp)=gramm('x',pT.Session,'y',pT.(yVar),'subset', sp_subInd{sp}, p.Results.GrammOptions{:});
+            g(1,sp).stat_summary(stat_set{1}{:});
+            g(1,sp).set_point_options('markers',{'o','s'}, point_set{1}{:});
+            g(1,sp).set_names('x','Session','y', yLab,'color',cVar);
+            g(1,sp).no_legend;
+        elseif mod(sp,2) == 0
+            g(1,sp)=gramm('x', pT.(cVar),'y', pT.(yVar), 'subset', sp_subInd{sp}, p.Results.GrammOptions{:});
+            g(1,sp).stat_summary(stat_set{2}{:});
+            g(1,sp).set_point_options('markers',{'o','s'}, point_set{2}{:});
+            g(1,sp).geom_jitter('alpha',.6,'dodge',1.75,'width',0.05);
+            g(1,sp).set_names(p.Results.LegendOptions{:});
+        end
+        g(1,sp).set_text_options('font','Helvetica','base_size',13,'legend_scaling',.75,'legend_title_scaling',.75);
+        g(1,sp).set_color_options(p.Results.ColorOptions{:});
+        g(1,sp).set_order_options(p.Results.OrderOptions{:});
+        g(1,sp).set_title(titles{sp});
+    end
+    
+    g.draw;
+    
+    for sp = 1:length(sp_subInd)
+        for s = 1:length(g(1,sp).results.stat_summary)
+            maxStat(s) = nanmax(g(1,sp).results.stat_summary(s).yci(:));
+            % if maxStat > yMax
+            %     yMax = maxStat;
+            % end
+        end
+        yMax(sp)=nanmax(maxStat);
+    end
+    
+    yMax = (ceil(yMax/10)*10)+10;
+    
+    if length(yMax)==4
+        yMax(1:2)=max(yMax(1:2));
+        yMax(3:4)=max(yMax(3:4));
+    elseif length(yMax)==2
+        yMax(1:2)=max(yMax(1:2));
+    end
+
+    if isnumeric(forceY)
+       yMax=forceY;
+    end
+    
+    for sp = 1:length(sp_subInd)
+        %g(1,sp).axe_property('LineWidth', 1.5, 'XLim', xLim{sp}, 'YLim', [0 yMax(sp)], 'TickDir','out');
+    
+        % Title
+        set(g(1,sp).title_axe_handle.Children ,'FontSize',12);
+    
+        if mod(sp,2) == 1
+            % Marker Manipulation
+            set(g(1,sp).results.stat_summary(1).point_handle,'MarkerEdgeColor',[0 0 0]);
+            set(g(1,sp).results.stat_summary(2).point_handle,'MarkerEdgeColor',[0 0 0]);
+            try
+                set(g(1,sp).results.stat_summary(3).point_handle,'MarkerEdgeColor',[0 0 0]);
+                set(g(1,sp).results.stat_summary(4).point_handle,'MarkerEdgeColor',[0 0 0]);
+            catch
+            end
+        elseif mod(sp,2) == 0
+            % Marker Manipulation
+            set(g(1,sp).results.geom_jitter_handle(1),'MarkerEdgeColor',[0 0 0]);
+            set(g(1,sp).results.geom_jitter_handle(2),'MarkerEdgeColor',[0 0 0]);
+            set(g(1,sp).results.stat_summary(1).bar_handle,'EdgeColor',[0 0 0]);
+            set(g(1,sp).results.stat_summary(2).bar_handle,'EdgeColor',[0 0 0]);
+            try
+                set(g(1,sp).results.geom_jitter_handle(3),'MarkerEdgeColor',[0 0 0]);
+                set(g(1,sp).results.geom_jitter_handle(4),'MarkerEdgeColor',[0 0 0]);
+                set(g(1,sp).results.stat_summary(3).bar_handle,'EdgeColor',[0 0 0]);
+                set(g(1,sp).results.stat_summary(4).bar_handle,'EdgeColor',[0 0 0])
+            catch
+            end
+        end
+    end
+
+    % Axes Limits
+    set(g(1,1).facet_axes_handles,'YLim',[0 yMax(1)],'XLim',[0 15.5]);
+    if strcmp(cVar,'Strain')
+        set(g(1,2).facet_axes_handles,'YLim',[0 yMax(2)],'XTickLabel',{'cd1','c57'});
+    elseif strcmp(cVar,'Sex')
+        set(g(1,2).facet_axes_handles,'YLim',[0 yMax(2)],'XTickLabel',{char(9792),char(9794)});
+    end
+
+     % Axes Limits
+    if runType == 'ER'
+        set(g(1,3).facet_axes_handles,'YLim',[0 yMax(3)],'XLim',[15 25.5],'XTick',[16 20 25],'XTickLabel',{'1','5','10'});
+    elseif runType == 'BE'
+        set(g(1,3).facet_axes_handles,'YLim',[0 yMax(3)],'XLim',[15 20.5],'XTick',[16 18 20],'XTickLabel',{'222','70','20'});
+    end
+    
+    try
+    if strcmp(cVar,'Strain')
+        set(g(1,4).facet_axes_handles,'YLim',[0 yMax(4)],'XTickLabel',{'cd1','c57'});
+    elseif strcmp(cVar,'Sex')
+        set(g(1,4).facet_axes_handles,'YLim',[0 yMax(4)],'XTickLabel',{char(9792),char(9794)});
+    end
+    catch
+    end
+    
+    % Remove & Move Axes
+    set(g(1,2).facet_axes_handles,'YColor',[1 1 1]);
+    set(g(1,2).facet_axes_handles,'YLabel',[],'YTick',[]);
+
+    if height(g(1, 2).results.geom_jitter_handle)==4
+        pos1=g(1,2).facet_axes_handles.OuterPosition;
+        set(g(1,2).facet_axes_handles,'OuterPosition',[pos1(1)-.04,pos1(2),pos1(3)-.04,pos1(4)]);
+        pos2=g(1,2).title_axe_handle.OuterPosition;
+        set(g(1,2).title_axe_handle,'OuterPosition',[pos2(1)-.05,pos2(2),pos2(3),pos2(4)]);
+    elseif height(g(1, 2).results.geom_jitter_handle)==2
+        pos1=g(1,2).facet_axes_handles.OuterPosition;
+        set(g(1,2).facet_axes_handles,'OuterPosition',[pos1(1)-.03,pos1(2),pos1(3)-.1,pos1(4)]);
+        pos2=g(1,2).title_axe_handle.OuterPosition;
+        set(g(1,2).title_axe_handle,'OuterPosition',[pos2(1)-.08,pos2(2),pos2(3),pos2(4)])
+    end
+
+    if length(sp_subInd) > 2
+        % Remove & Move Axes
+        set(g(1,4).facet_axes_handles,'YColor',[1 1 1]);
+        set(g(1,4).facet_axes_handles,'YLabel',[],'YTick',[]);
+        pos5=g(1,3).facet_axes_handles.OuterPosition;
+        set(g(1,3).facet_axes_handles,'OuterPosition',[pos5(1),pos5(2),pos5(3)-.065,pos5(4)]);
+        pos6=g(1,3).title_axe_handle.OuterPosition;
+        set(g(1,3).title_axe_handle,'OuterPosition',[pos6(1)-.035,pos6(2),pos6(3),pos6(4)]);
+        if height(g(1, 2).results.geom_jitter_handle)==4
+            pos3=g(1,4).facet_axes_handles.OuterPosition;
+            set(g(1,4).facet_axes_handles,'OuterPosition',[pos3(1)-.09,pos3(2),pos3(3)-.04,pos3(4)]);
+            pos4=g(1,4).title_axe_handle.OuterPosition;
+            set(g(1,4).title_axe_handle,'OuterPosition',[pos4(1)-.09,pos4(2),pos4(3),pos4(4)]);
+        elseif height(g(1, 2).results.geom_jitter_handle)==2
+            pos3=g(1,4).facet_axes_handles.OuterPosition;
+            set(g(1,4).facet_axes_handles,'OuterPosition',[pos3(1)-.08,pos3(2),pos3(3)-.11,pos3(4)]);
+            pos4=g(1,4).title_axe_handle.OuterPosition;
+            set(g(1,4).title_axe_handle,'OuterPosition',[pos4(1)-.135,pos4(2),pos4(3),pos4(4)]);
+        end
+    end
+
+     for sp = 1:length(sp_subInd)
+        set(g(1,sp).facet_axes_handles,'LineWidth', 1.5, 'TickDir','out');
+     end
+    
+    % Export Figure
+    for fst = 1:length(figsave_type)
+        if strcmp(figsave_type{fst}, '.pdf')
+            exportgraphics(gcf,[figName, figsave_type{fst}], 'ContentType','vector')
+        else
+            exportgraphics(gcf,[figName, figsave_type{fst}]);
+        end
+        disp(['saved figure: ', figName, figsave_type{fst}])
+    end
+    
+    
+    if donut
+        plotDonut(pT, subInd, g, figName, figsave_type)
     end
     % catch
     % disp('oh no! had to skip a figure, wonder why??')
     % end
     end
     
-function plotDonut(pT, subInd, g, figName, figsave_type)
+    function plotDonut(pT, subInd, g, figName, figsave_type)
     % Donut Chart for Overlay
-    groupStats = grpstats(pT(pT.Session == min(pT.Session) & subInd, :),["Sex","Strain","Acquire"],["mean","sem"],"DataVars",'ActiveLever');
+    groupStats = grpstats(pT(pT.Session==1 & subInd, :),["Sex","Strain","Acquire"],["mean","sem"],"DataVars",'ActiveLever');
     % groupStats = sortrows(groupStats,"Acquire",'descend');
     f2=figure('Position',[1 300 575 575]);
     d=donutchart(groupStats.GroupCount, strrep(groupStats.Properties.RowNames, '_', ' '));
     d.InnerRadius=.45;
-    % SSnote: can't figure out how to make sure these colors correspond
+    % SS note: can't figure out how to make sure these colors correspond
     % to the figure when there are groups with no data
     % for s = 1:length(g(1,1).results.stat_summary)
     %     d.ColorOrder(s,1:3)=g(1,1).results.stat_summary(s).point_handle.MarkerFaceColor; % SS note: the hell is going on here w/ the stat summary indexing?
