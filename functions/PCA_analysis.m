@@ -11,16 +11,20 @@ function [PCA] = PCA_analysis(ivZT, pcaGroups, sub_dir, saveTabs, tabs_savepath,
                 use_inds = use_inds & (ivZT.(pcaGroups{pg}{cat}{1})==(pcaGroups{pg}{cat}{2}));
             end
         end
-        this_field = suff_str(2:end);
-        PCA.(this_field) = struct;
-        PCA.(this_field).ivZT_inds = find(use_inds);   
-        prednames = ivZT.Properties.VariableNames;
-        prednames = prednames(~ismember(prednames, {'ID', 'Strain', 'Sex', 'Acquire', 'Severity', 'Class'}));
-        [coeff,score,latent] = pca(ivZT{PCA.(this_field).ivZT_inds, prednames});
-        PCA.(this_field).coeff = coeff;
-        PCA.(this_field).score = score;
-        PCA.(this_field).latent = latent;
-        PCA.(this_field).prednames = prednames;
+        if ~isempty(find(use_inds,1))
+            this_field = suff_str(2:end);
+            PCA.(this_field) = struct;
+            PCA.(this_field).ivZT_inds = find(use_inds);   
+            prednames = ivZT.Properties.VariableNames;
+            prednames = prednames(~ismember(prednames, {'ID', 'Strain', 'Sex', 'Acquire', 'Severity', 'Class'}));
+            [coeff,score,latent] = pca(ivZT{PCA.(this_field).ivZT_inds, prednames});
+            PCA.(this_field).coeff = coeff;
+            PCA.(this_field).score = score;
+            PCA.(this_field).latent = latent;
+            PCA.(this_field).prednames = prednames;
+        else
+            disp(['no data available for PCA: ', suff_str(2:end)])
+        end
     end
     if saveTabs
         save([sub_dir, tabs_savepath, 'IS_metric_PCA', char(z_suff), '.mat'], 'PCA');

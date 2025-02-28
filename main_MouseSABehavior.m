@@ -26,8 +26,8 @@ BE_intake_canonical_flnm = '.\2024.12.09.BE Intake Canonical.xlsx'; % Key for dr
 experimentKey_flnm = '.\Experiment Key.xlsx'; % Key for
 
 % MISC. SETTINGS
-runNum = '4'; % options: 'all' or desired runs separated by underscores (e.g. '1', '1_3_4', '3_2')
-runType = 'ER'; % options: 'ER' (Extinction Reinstatement), 'BE' (Behavioral Economics), 'SA' (Self Administration)
+runNum = '4_5'; % options: 'all' or desired runs separated by underscores (e.g. '1', '1_3_4', '3_2')
+runType = 'all'; % options: 'ER' (Extinction Reinstatement), 'BE' (Behavioral Economics), 'SA' (Self Administration)
 createNewMasterTable = false; % true: generates & saves a new master table from medPC files in datapath. false: reads mT in from masterTable_flnm if set to false, otherwise 
 firstHour = false; % true: acquire data from the first-hour of data and analyze in addition to the full sessions
 excludeData = true; % true: excludes data based on the 'RemoveSession' column of masterSheet
@@ -35,19 +35,23 @@ acquisition_thresh = 10; % to be labeled as "Acquire", animal must achieve an av
 acquisition_testPeriod = {'Training', 'last', 5}; % determines sessions to average infusions across before applying acquisition_thresh. second value can be 'all', 'first', or 'last'. if 'first' or 'last', there should be a 3rd value giving the number of days to average across, or it will default to 1. 
 pAcq = true; % true: plot aquisition histogram to choose threshold 
 
-run_BE_analysis = false;
-run_withinSession_analysis = true;
+run_BE_analysis = true;
+run_withinSession_analysis = false;
 run_individualSusceptibility_analysis = true;
 
 % FIGURE OPTIONS
 % Currently, if figures are generated they are also saved. 
-saveTabs = false; % true: save matlab tables of analyzed datasets
-dailyFigs = false; % true: generate daily figures from dailySAFigures.m
-pubFigs = false; % true: generate publication figures from pubSAFigures.m
-indivIntake_figs = false; % true: generate figures for individual animal behavior across & within sessions
+saveTabs = true; % true: save matlab tables of analyzed datasets
+dailyFigs = true; % true: generate daily figures from dailySAFigures.m
+pubFigs = true; % true: generate publication figures from pubSAFigures.m
+indivIntake_figs = true; % true: generate figures for individual animal behavior across & within sessions
 groupIntake_figs = true; % true: generate figures grouped by sex, strain, etc. for animal behavior across & within sessions
 groupOralFentOutput_figs = true; % true: generate severity figures
 figsave_type = {'.png', '.pdf'};
+% color settings chosen for publication figures. SSnote: haven't been implemented for other figure-generating functions yet. 
+gramm_C57_Sex_colors = {'hue_range',[40 310],'lightness_range',[95 65],'chroma_range',[50 90]};
+gramm_CD1_Sex_colors = {'hue_range',[85 -200],'lightness_range',[85 75],'chroma_range',[75 90]};
+gramm_Strain_Acq_colors = {'hue_range',[25 385],'lightness_range',[95 60],'chroma_range',[50 70]};
 
 % SAVE PATHS
 % Each dataset run (determined by runNum and runType) will have its own
@@ -97,7 +101,6 @@ if createNewMasterTable
 else
     load(masterTable_flnm)
 end
-
 
 %% FILTER DATA
 % exclude data
@@ -192,9 +195,11 @@ statsname=[sub_dir, tabs_savepath, 'Oral SA Group Stats '];
 data = mT(mT.sessionType == 'Training',:);
 dep_var = ["Intake", "EarnedInfusions", "HeadEntries", "Latency", "ActiveLever", "InactiveLever"];
 lme_form = " ~ Sex*Session + (1|TagNumber)";
-Training_LMEstats = getLMEstats(data, dep_var, lme_form);
-if saveTabs
-    save([statsname, 'SA'], 'Training_LMEstats');
+if ~isempty(data)
+    Training_LMEstats = getLMEstats(data, dep_var, lme_form);
+    if saveTabs
+        save([statsname, 'SA'], 'Training_LMEstats');
+    end
 end
 
 if any(ismember(runType,'ER'))
@@ -203,16 +208,24 @@ if any(ismember(runType,'ER'))
     data = mT(mT.sessionType=='Extinction',:);
     dep_var = ["HeadEntries", "Latency", "ActiveLever", "InactiveLever"];
     lme_form = " ~ Sex*Session + (1|TagNumber)";
-    Extinction_LMEstats = getLMEstats(data, dep_var, lme_form);
-    
+    if ~isempty(data)
+        Extinction_LMEstats = getLMEstats(data, dep_var, lme_form);
+    end
+
     % Reinstatement
     data = mT(mT.sessionType=='Reinstatement',:);
     dep_var = ["HeadEntries", "Latency", "ActiveLever", "InactiveLever"];
     lme_form = " ~ Sex + (1|TagNumber)";
-    Reinstatement_LMEstats = getLMEstats(data, dep_var, lme_form);
-    
+    if ~isempty(data)
+        Reinstatement_LMEstats = getLMEstats(data, dep_var, lme_form);
+    end
     if saveTabs
-        save([statsname, 'ER'], 'Extinction_LMEstats', 'Reinstatement_LMEstats');
+        if exist("Extinction_LMEstats", "var")
+            save([statsname, 'Extinction'], 'Extinction_LMEstats');
+        end
+        if exist("Reinstatement_LMEstats", "var")
+            save([statsname, 'Reinstatement'], 'Reinstatement_LMEstats');
+        end
     end
 
 elseif any(ismember(runType,'BE'))
@@ -221,9 +234,11 @@ elseif any(ismember(runType,'BE'))
     data = mT(mT.sessionType=='BehavioralEconomics',:);
     dep_var = ["Intake", "EarnedInfusions", "HeadEntries", "Latency", "ActiveLever", "InactiveLever"];
     lme_form = " ~ Sex + (1|TagNumber)";
-    BehavioralEconomics_LMEstats = getLMEstats(data, dep_var, lme_form);
-    if saveTabs
-        save([statsname, 'BE'], 'BehavioralEconomics_LMEstats');
+    if ~isempty(data)
+        BehavioralEconomics_LMEstats = getLMEstats(data, dep_var, lme_form);
+        if saveTabs
+            save([statsname, 'BE'], 'BehavioralEconomics_LMEstats');
+        end
     end
 end
 

@@ -1,3 +1,4 @@
+% NOT CURRENTLY USING, KEEPING TEMPORARILY FOR REFERENCE
 function group_allSessionFig(tab, subset, xvar, xlab, yvar, ylab, colorGroup, lightGroup, facetwrap, figtitle, figpath, stat_type, figsave_type)
     x = tab.(xvar);
     y = tab.(yvar); 
@@ -6,7 +7,7 @@ function group_allSessionFig(tab, subset, xvar, xlab, yvar, ylab, colorGroup, li
     if strcmp(xvar,'adj_rewLP')
         x = x/60;
     end
-
+    
     f = figure('units','normalized','outerposition',[0 0 .5 1]);
     g=gramm('x',x(subset),'y',y(subset),'color',cg(subset),'lightness',lg(subset));
     g.set_color_options('hue_range',[50 542.5],'chroma',80,'lightness',60,'n_color',2);

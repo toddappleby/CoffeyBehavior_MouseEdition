@@ -25,7 +25,7 @@ function [ivT] = IS_processes(mT, dex, runType, corrGroups, violSubsets, violGro
     end
     
     for zg = 1:length(zGroups)
-        [ivZT] = SeverityScore(ivT(find(zGroups{zg}),:), includeER(zg));
+        [ivZT] = SeverityScore(ivT(logical(zGroups{zg}),:), includeER(zg));
         if saveTabs
             save([sub_dir, tabs_savepath, 'IS_Zscores', char(z_suff{zg}), '.mat'], 'ivZT');
         end
@@ -38,11 +38,16 @@ function [ivT] = IS_processes(mT, dex, runType, corrGroups, violSubsets, violGro
                 if ~strcmp(violSubsets{vg}{1}, 'all')
                     subset = subset & (thistab.(violSubsets{vg}{1}) == violSubsets{vg}{2});
                 end
-                ViolinFig(thistab(find(subset), :), violGroups{vg}, [z_suff{zg}, '_', violLabels{vg}], includeER(zg), sub_dir, groupOralFentOutput_savepath, figsave_type)
+                if ~isempty(find(subset, 1)) && length(unique(thistab(subset,:).(violGroups{vg}))) > 1
+                    ViolinFig(thistab(find(subset), :), violGroups{vg}, [z_suff{zg}, '_', violLabels{vg}], includeER(zg), sub_dir, groupOralFentOutput_savepath, figsave_type)
+                else
+                    disp(['no data available for violin plot: ', z_suff{zg}, '_', violLabels{vg}])
+                end
             end
             PCA = PCA_analysis(ivZT, pcaGroups, sub_dir, saveTabs, tabs_savepath, z_suff{zg});
-            
-            PCA_fig(ivZT, PCA, sub_dir, groupOralFentOutput_savepath, z_suff{zg}, figsave_type);
+            if groupOralFentOutput_figs 
+                PCA_fig(ivZT, PCA, sub_dir, groupOralFentOutput_savepath, z_suff{zg}, figsave_type);
+            end
         end
     end
 end

@@ -3,8 +3,11 @@ function [mTDL, mPressT, mDrugLT] = WithinSession_Processes(mT, dex, sub_dir, in
     % 97 = rewarded lever presses followed by head entry
     % 99 = rewarded head entries (preceded by lever press)
 
-    mTDL = mT(dex.all,:);
-    mTDL = mTDL(mTDL.EarnedInfusions>10, :);
+    % mTDL = mT(dex.all,:);
+    % mTDL = mTDL(mTDL.EarnedInfusions>10, :);
+    mTDL_subset = intersect(dex.all, find(mT.Acquire=='Acquire' & mT.EarnedInfusions>10));
+    mTDL = mT(mTDL_subset, :);
+    
     mPressT = table;
     mDrugLT = table;
     
@@ -20,6 +23,7 @@ function [mTDL, mPressT, mDrugLT] = WithinSession_Processes(mT, dex, sub_dir, in
         cumulDoseHE = cumsum(doseHE);
         rewHE = ET(EC==99);
         adj_rewLP = ET(EC==97);
+        adj_rewLP_div60 = adj_rewLP / 60;
         conc = mTDL.Concentration(i);
     
         TagNumber=repmat([mTDL.TagNumber(i)],length(adj_rewLP),1);
@@ -29,9 +33,9 @@ function [mTDL, mPressT, mDrugLT] = WithinSession_Processes(mT, dex, sub_dir, in
         Strain =repmat([mTDL.Strain(i)],length(adj_rewLP),1);
     
         if i==1
-            mPressT=table(TagNumber, Session, adj_rewLP, cumulDoseHE, Sex, Strain, sessionType);
+            mPressT=table(TagNumber, Session, adj_rewLP, adj_rewLP_div60, cumulDoseHE, Sex, Strain, sessionType);
         else
-            mPressT=[mPressT; table(TagNumber, Session, adj_rewLP, cumulDoseHE, Sex, Strain, sessionType)];
+            mPressT=[mPressT; table(TagNumber, Session, adj_rewLP, adj_rewLP_div60, cumulDoseHE, Sex, Strain, sessionType)];
         end
         
         infDur = 4; % duration of infusion in seconds
@@ -100,7 +104,7 @@ function [mTDL, mPressT, mDrugLT] = WithinSession_Processes(mT, dex, sub_dir, in
                     figpath = [sub_dir, indivIntakefigs_savepath, 'BE_estBrainFent_overlay_Tag_', char(IDs(j))];
                     subTab = mDrugLT(find(subset), :);
                     grammOptions = {'lightness', subTab.Session};
-                    statOptions = {'line'};
+                    statOptions = {'area'};
                    
                     gramm_GroupFig(subTab, "DLTime", "DL", "Time (m)", "Estimated Brain Fentanyl (pMOL)", ...
                                    figpath, figsave_type, 'GrammOptions', grammOptions, 'LegOptions', legOptions);    
@@ -109,27 +113,40 @@ function [mTDL, mPressT, mDrugLT] = WithinSession_Processes(mT, dex, sub_dir, in
         end
     end
     
-    if groupIntake_figs    
-        % Drug Level by Strain and Sex 
+    if groupIntake_figs   
+        wrapOptions = {mDrugLT.Session,'scale','independent','ncols',5,'column_labels',1}; %'force_ticks',1,
+        axOptions = {'LineWidth',1.5,'FontSize',10,'XLim',[0 180],'tickdir','out'};
+        legOptions = {'color', 'Strain', 'lightness', 'Sex'};
+
+        % Drug Level by Strain and Sex
         figpath = [sub_dir, groupIntakefigs_savepath, 'Drug Level Grouped by Sex and Strain'];
-        group_allSessionFig(mDrugLT, logical(ones([height(mDrugLT),1])), 'DLTime', 'Time (m)', 'DL', 'Estimated Brain Fentanyl (pMOL)', ...
-                            'Strain', 'Sex', 'Session', 'Group Drug Level', figpath, 'area', figsave_type);
+        grammOptions = {'color', mDrugLT.Strain, 'lightness', mDrugLT.Sex'};
+        statOptions = {'geom', 'area', 'setylim',1};
+        gramm_GroupFig(mDrugLT, "DLTime", "DL", "Time (m)", "Estimated Brain Fentanyl (pMOL)", figpath, figsave_type, ...
+                      'GrammOptions', grammOptions, 'StatOptions', statOptions, 'WrapOptions', wrapOptions, 'AxOptions', axOptions, 'LegOptions', legOptions)
 
         % Drug Level by Strain and Sex during Training
         figpath = [sub_dir,groupIntakefigs_savepath, 'Drug Level Grouped by Sex and Strain during Training'];
-        group_allSessionFig(mDrugLT, mDrugLT.sessionType=='Training', 'DLTime', 'Time (m)', 'DL', 'Estimated Brain Fentanyl (pMOL)', ...
-                            'Strain', 'Sex', 'Session', 'Group Drug Level (Training)', figpath, 'area', figsave_type);
+        grammOptions = {'color', mDrugLT.Strain, 'lightness', mDrugLT.Sex', 'subset', mDrugLT.sessionType=='Training'};
+        gramm_GroupFig(mDrugLT, "DLTime", "DL", "Time (m)", "Estimated Brain Fentanyl (pMOL)", figpath, figsave_type, ...
+                      'GrammOptions', grammOptions, 'StatOptions', statOptions, 'WrapOptions', wrapOptions, 'AxOptions', axOptions, 'LegOptions', legOptions)
 
         % Drug Level by Sex and Session during Training Sessions 5, 10, 15
         figpath = [sub_dir, groupIntakefigs_savepath, 'Drug Level Grouped by Sex and Session 5 10 15'];
         subset = (mDrugLT.Session==5 | mDrugLT.Session==10 | mDrugLT.Session==15);
-        group_allSessionFig(mDrugLT, subset, 'DLTime', 'Time (m)', 'DL', 'Estimated Brain Fentanyl (pMOL)', ...
-                            'Sex', 'Session', 'none', 'Average Group Drug Level (Sessions 5, 10, 15)', figpath, 'line', figsave_type);
+        grammOptions = {'color', mDrugLT.Strain, 'lightness', mDrugLT.Sex, 'subset', subset};
+        statOptions = {'geom', 'line', 'setylim', 1};
+        wrapOptions = {mDrugLT.Session,'scale','independent','ncols',3,'column_labels',1}; %'force_ticks',1,
+        gramm_GroupFig(mDrugLT, "DLTime", "DL", "Time (m)", "Estimated Brain Fentanyl (pMOL)", figpath, figsave_type, ...
+                       'GrammOptions', grammOptions, 'StatOptions', statOptions, 'WrapOptions', wrapOptions, 'AxOptions', axOptions, 'LegOptions', legOptions)
 
         % Cumulative responses (rewarded head entries) by Sex and Session during Training Sessions 5, 10, 15
         figpath = [sub_dir, groupIntakefigs_savepath, 'Mean Responses Grouped by Sex and Session 5 10 15'];
         subset = (mPressT.Session==5 | mPressT.Session==10 | mPressT.Session==15);
-        group_allSessionFig(mPressT, subset, 'adj_rewLP', 'Time (m)', 'cumulDoseHE', 'Cumulative Responses', ...
-                            'Sex', 'Session', 'none', 'Mean Cumulative Responses (Sessions 5, 10, 15)', figpath, 'cumbin', figsave_type);
+        grammOptions = {'color', mPressT.Strain, 'lightness', mPressT.Sex, 'subset', subset};
+        statOptions = {'normalization','cumcount','geom','stairs','edges',0:1:180};
+        wrapOptions = {mPressT.Session,'scale','independent','ncols',3,'column_labels',1}; %'force_ticks',1,
+        gramm_GroupFig(mPressT, "adj_rewLP_div60", "cumulDoseHE", "Time (m)", "Cumulative Responses", figpath, figsave_type, ...
+                       'GrammOptions', grammOptions, 'StatOptions', statOptions, 'WrapOptions', wrapOptions, 'AxOptions', axOptions, 'LegOptions', legOptions)
     end
 end
