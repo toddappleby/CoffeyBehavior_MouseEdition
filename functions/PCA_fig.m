@@ -59,10 +59,10 @@ function PCA_fig(ivZT, PCA, sub_dir, subfolder, suffix, figsave_type)
             
     
         end
-        pbaspect([1,1,1])
+        pbaspect([1,1,1]);
         set(gca,'LineWidth',1.5,'TickDir','in','FontSize',14);
         grid off
-        title(strrep(groups{p}, '_', ' '))
+        title(strrep(groups{p}, '_', ' '));
 
         saveas(f1, [sub_dir, subfolder '3D_PCA_Vectors_', groups{p}]);
         
@@ -74,7 +74,7 @@ function PCA_fig(ivZT, PCA, sub_dir, subfolder, suffix, figsave_type)
         pcTable = [this_ivZT, table(PC1, PC2)];
         f1 = figure('color','w','position',[100 100 800 650]);
         g = gramm('x', pcTable.PC1, 'y', pcTable.PC2, 'color', pcTable.Sex, 'marker', pcTable.Strain, 'lightness', pcTable.Class);
-        g.set_order_options('lightness', {'Low', 'Mid', 'High'})
+        g.set_order_options('lightness', {'Low', 'Mid', 'High'});
         g.set_color_options('hue_range',[50 542.5],'chroma',80,'lightness',60,'n_color',2);
         g.geom_point();
         g.set_names('x','PC1','y','PC2','color','Sex', 'marker', 'Strain', 'lightness', 'Class');
@@ -83,12 +83,12 @@ function PCA_fig(ivZT, PCA, sub_dir, subfolder, suffix, figsave_type)
         g.set_point_options('base_size',8);
         g.draw;
         for i = 1:height(g.results.geom_point_handle)
-           g.results.geom_point_handle(i)
+           g.results.geom_point_handle(i);
            g.results.geom_point_handle(i).MarkerEdgeColor = [0 0 0];
            g.results.size(i);
         end
-        title(strrep(groups{p}, '_', ' '))
-        saveFigsByType(f1, [sub_dir, subfolder, '2D_PCA_', groups{p}], figsave_type)
+        title(strrep(groups{p}, '_', ' '));
+        saveFigsByType(f1, [sub_dir, subfolder, '2D_PCA_', groups{p}], figsave_type);
         close(f1)
     end
 end

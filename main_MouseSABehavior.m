@@ -263,7 +263,7 @@ end
 %   8) Relapse = total presses during reinstatement
 %   9) Cue Recall = HE Latency in reinstatement 
 %
-% SSnote: how does it come out if severity score is multiplied
+% how does it affect severity that negative z-scores are included?
 % 
 % Experiment-dependent use cases: 
 %   If the experiment contains ER experiment data, animals involved in these

@@ -11,7 +11,7 @@ function [PCA] = PCA_analysis(ivZT, pcaGroups, sub_dir, saveTabs, tabs_savepath,
                 use_inds = use_inds & (ivZT.(pcaGroups{pg}{cat}{1})==(pcaGroups{pg}{cat}{2}));
             end
         end
-        if ~isempty(find(use_inds,1))
+        if length(find(use_inds)) > 3
             this_field = suff_str(2:end);
             PCA.(this_field) = struct;
             PCA.(this_field).ivZT_inds = find(use_inds);   
@@ -23,7 +23,7 @@ function [PCA] = PCA_analysis(ivZT, pcaGroups, sub_dir, saveTabs, tabs_savepath,
             PCA.(this_field).latent = latent;
             PCA.(this_field).prednames = prednames;
         else
-            disp(['no data available for PCA: ', suff_str(2:end)])
+            disp(['not enough data available for PCA: ', suff_str(2:end)])
         end
     end
     if saveTabs
