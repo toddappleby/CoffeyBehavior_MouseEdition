@@ -77,18 +77,6 @@ function [varTable] = rawVariableExtractor(varTable, eventCode, eventTime)
     else
         varTable.EarnedInfusions = length(time_rewLP);
     end
-    
-    % SSnote: move slideSession to main script or createMasterTable to generalize it and get it from the experiment table
-    % slideSession - Slide Days for looks
-    if varTable.Session<6
-        varTable.slideSession=varTable.Session;
-    elseif varTable.Session>5 && varTable.Session<16
-        varTable.slideSession=varTable.Session+1;
-    elseif varTable.Session>15 && varTable.Session<26
-        varTable.slideSession=varTable.Session+2;
-    elseif varTable.Session>25
-        varTable.slideSession=varTable.Session+3;
-    end
 
     % calculate all and mean latency
     varTable.allLatency = {time_HE_following_rewLP - time_rewLP_preceding_HE};

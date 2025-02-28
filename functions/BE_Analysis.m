@@ -7,7 +7,6 @@ function [beT, beiT, BE_IndivFit, BE_GroupFit] = BE_Analysis(mT, expKey, BE_inta
     ID=unique(beT.TagNumber);  
     BE_sess = unique(expKey.Session(strcmp(expKey.SessionType,'BehavioralEconomics')));
 
-
     % Import Dose and Measured Intake Data
     opts = detectImportOptions(BE_intake_canonical_flnm); 
     beiT=readtable(BE_intake_canonical_flnm, opts);

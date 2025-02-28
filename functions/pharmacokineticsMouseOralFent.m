@@ -62,7 +62,7 @@ switch p.Results.type
         timespan=(0:(SESSIONLENGTH*60)-1)'; % Time Array
         p=[];
         for i=1:length(infusionStart) % Calc Infusion Logical Array (Infusion or Not)
-            if infusionStart(i)>=SESSIONLENGTH*60;
+            if infusionStart(i)>=SESSIONLENGTH*60
                 continue %Ignore infusions after session end
             else
                 % Calc Infusion Logical Array (Infusion or Not)

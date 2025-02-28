@@ -13,6 +13,6 @@ function ViolinFig(ivT, group, label, includeER, sub_dir, groupOralFentOutput_sa
     end
 
     f = plotViolins(ivT, yVars, yLabs, group);
-    saveFigsByType(f, [sub_dir, groupOralFentOutput_savepath, label], figsave_type)
+    saveFigsByType(f, [sub_dir, groupOralFentOutput_savepath, 'Violin', label], figsave_type)
     close(f)
 end

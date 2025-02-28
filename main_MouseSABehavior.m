@@ -15,8 +15,6 @@
 close all
 clear all
 
-disp('branch pull test')
-
 % IMPORT PATHS
 main_folder = pwd;
 cd(main_folder)
@@ -28,27 +26,32 @@ BE_intake_canonical_flnm = '.\2024.12.09.BE Intake Canonical.xlsx'; % Key for dr
 experimentKey_flnm = '.\Experiment Key.xlsx'; % Key for
 
 % MISC. SETTINGS
-runNum = 'all'; % options: 'all' or desired runs separated by underscores (e.g. '1', '1_3_4', '3_2')
+runNum = '4_5'; % options: 'all' or desired runs separated by underscores (e.g. '1', '1_3_4', '3_2')
 runType = 'all'; % options: 'ER' (Extinction Reinstatement), 'BE' (Behavioral Economics), 'SA' (Self Administration)
 createNewMasterTable = false; % true: generates & saves a new master table from medPC files in datapath. false: reads mT in from masterTable_flnm if set to false, otherwise 
-firstHour = true; % true: acquire data from the first-hour of data and analyze in addition to the full sessions
+firstHour = false; % true: acquire data from the first-hour of data and analyze in addition to the full sessions
 excludeData = true; % true: excludes data based on the 'RemoveSession' column of masterSheet
 acquisition_thresh = 10; % to be labeled as "Acquire", animal must achieve an average number of infusions in the second weak of Training sessions greater than this threshold
+acquisition_testPeriod = {'Training', 'last', 5}; % determines sessions to average infusions across before applying acquisition_thresh. second value can be 'all', 'first', or 'last'. if 'first' or 'last', there should be a 3rd value giving the number of days to average across, or it will default to 1. 
 pAcq = true; % true: plot aquisition histogram to choose threshold 
 
 run_BE_analysis = true;
-run_withinSession_analysis = true;
+run_withinSession_analysis = false;
 run_individualSusceptibility_analysis = true;
 
 % FIGURE OPTIONS
 % Currently, if figures are generated they are also saved. 
 saveTabs = true; % true: save matlab tables of analyzed datasets
-dailyFigs = false; % true: generate daily figures from dailySAFigures.m
-pubFigs = false; % true: generate publication figures from pubSAFigures.m
+dailyFigs = true; % true: generate daily figures from dailySAFigures.m
+pubFigs = true; % true: generate publication figures from pubSAFigures.m
 indivIntake_figs = true; % true: generate figures for individual animal behavior across & within sessions
 groupIntake_figs = true; % true: generate figures grouped by sex, strain, etc. for animal behavior across & within sessions
 groupOralFentOutput_figs = true; % true: generate severity figures
 figsave_type = {'.png', '.pdf'};
+% color settings chosen for publication figures. SSnote: haven't been implemented for other figure-generating functions yet. 
+gramm_C57_Sex_colors = {'hue_range',[40 310],'lightness_range',[95 65],'chroma_range',[50 90]};
+gramm_CD1_Sex_colors = {'hue_range',[85 -200],'lightness_range',[85 75],'chroma_range',[75 90]};
+gramm_Strain_Acq_colors = {'hue_range',[25 385],'lightness_range',[95 60],'chroma_range',[50 70]};
 
 % SAVE PATHS
 % Each dataset run (determined by runNum and runType) will have its own
@@ -99,7 +102,6 @@ else
     load(masterTable_flnm)
 end
 
-
 %% FILTER DATA
 % exclude data
 if excludeData
@@ -110,11 +112,11 @@ end
 dex = getExperimentIndex(mT, runNum, runType);
 
 %% Determine Acquire vs Non-acquire
-Acquire = getAcquire(mT, acquisition_thresh, pAcq);
-try
-mT=[mT table(Acquire)];
-catch
-mT.Acquire = Acquire;
+Acquire = getAcquire(mT, acquisition_thresh, acquisition_testPeriod, pAcq);
+if ~any(ismember(mT.Properties.VariableNames, 'Acquire'))
+    mT=[mT table(Acquire)];
+else
+    mT.Acquire = Acquire;
 end
 
 %% Get data from the first hour of the session 
@@ -123,7 +125,6 @@ if firstHour
 end
 
 %% get group statistics and save tables of data analyzed
-% SSnote: this doesn't save stats for all exps
 groupStats = struct;
 if firstHour; hour_groupStats = struct; end
 for et = 1:length(runType)
@@ -194,9 +195,11 @@ statsname=[sub_dir, tabs_savepath, 'Oral SA Group Stats '];
 data = mT(mT.sessionType == 'Training',:);
 dep_var = ["Intake", "EarnedInfusions", "HeadEntries", "Latency", "ActiveLever", "InactiveLever"];
 lme_form = " ~ Sex*Session + (1|TagNumber)";
-Training_LMEstats = getLMEstats(data, dep_var, lme_form);
-if saveTabs
-    save([statsname, 'SA'], 'Training_LMEstats');
+if ~isempty(data)
+    Training_LMEstats = getLMEstats(data, dep_var, lme_form);
+    if saveTabs
+        save([statsname, 'SA'], 'Training_LMEstats');
+    end
 end
 
 if any(ismember(runType,'ER'))
@@ -205,16 +208,24 @@ if any(ismember(runType,'ER'))
     data = mT(mT.sessionType=='Extinction',:);
     dep_var = ["HeadEntries", "Latency", "ActiveLever", "InactiveLever"];
     lme_form = " ~ Sex*Session + (1|TagNumber)";
-    Extinction_LMEstats = getLMEstats(data, dep_var, lme_form);
-    
+    if ~isempty(data)
+        Extinction_LMEstats = getLMEstats(data, dep_var, lme_form);
+    end
+
     % Reinstatement
     data = mT(mT.sessionType=='Reinstatement',:);
     dep_var = ["HeadEntries", "Latency", "ActiveLever", "InactiveLever"];
     lme_form = " ~ Sex + (1|TagNumber)";
-    Reinstatement_LMEstats = getLMEstats(data, dep_var, lme_form);
-    
+    if ~isempty(data)
+        Reinstatement_LMEstats = getLMEstats(data, dep_var, lme_form);
+    end
     if saveTabs
-        save([statsname, 'ER'], 'Extinction_LMEstats', 'Reinstatement_LMEstats');
+        if exist("Extinction_LMEstats", "var")
+            save([statsname, 'Extinction'], 'Extinction_LMEstats');
+        end
+        if exist("Reinstatement_LMEstats", "var")
+            save([statsname, 'Reinstatement'], 'Reinstatement_LMEstats');
+        end
     end
 
 elseif any(ismember(runType,'BE'))
@@ -223,9 +234,11 @@ elseif any(ismember(runType,'BE'))
     data = mT(mT.sessionType=='BehavioralEconomics',:);
     dep_var = ["Intake", "EarnedInfusions", "HeadEntries", "Latency", "ActiveLever", "InactiveLever"];
     lme_form = " ~ Sex + (1|TagNumber)";
-    BehavioralEconomics_LMEstats = getLMEstats(data, dep_var, lme_form);
-    if saveTabs
-        save([statsname, 'BE'], 'BehavioralEconomics_LMEstats');
+    if ~isempty(data)
+        BehavioralEconomics_LMEstats = getLMEstats(data, dep_var, lme_form);
+        if saveTabs
+            save([statsname, 'BE'], 'BehavioralEconomics_LMEstats');
+        end
     end
 end
 
@@ -250,7 +263,6 @@ end
 %   8) Relapse = total presses during reinstatement
 %   9) Cue Recall = HE Latency in reinstatement 
 %
-% SSnote: invert association & cue recall prior to z-scores?
 % SSnote: how does it come out if severity score is multiplied
 % 
 % Experiment-dependent use cases: 
@@ -266,8 +278,34 @@ end
 %                   (separately calculated and saved for ER and non ER groups)
 
 if run_individualSusceptibility_analysis
-    ivT = individualSusceptibility_processes(mT, dex, runType, sub_dir, saveTabs, tabs_savepath, groupOralFentOutput_figs, groupOralFentOutput_savepath, figsave_type);
+
+    % subgroups of z-scored data to run correlations across
+    corrGroups = {{{'all'}}, ...
+                  {{'Strain', 'c57'}}, ...
+                  {{'Strain', 'CD1'}}, ...
+                  {{'Sex', 'Male'}}, ...
+                  {{'Sex', 'Female'}}, ...
+                  {{'Strain', 'c57'}, {'Sex', 'Male'}}, ...
+                  {{'Strain', 'c57'}, {'Sex', 'Female'}}, ...
+                  {{'Strain', 'CD1'}, {'Sex', 'Male'}}, ...
+                  {{'Strain', 'CD1'}, {'Sex', 'Female'}}}; 
+
+    % groups to show comparison violin plots for each individual
+    % susceptibility metric
+    violSubsets = {{'all'}, {'all'}, {'Strain', 'c57'}, {'Strain', 'CD1'}};
+    violGroups = {'Strain', 'Sex', 'Sex', 'Sex'};
+    violLabels = {'Strain', 'Sex', 'c57 Sex', 'CD1 Sex'};
+
+    pcaGroups = corrGroups;
+
+    ivT = IS_processes(mT, dex, runType, corrGroups, violSubsets, ...
+                       violGroups, violLabels, pcaGroups, sub_dir, ...
+                       saveTabs, tabs_savepath, groupOralFentOutput_figs, ...
+                       groupOralFentOutput_savepath, figsave_type);
     if firstHour
-        fH_ivT = individualSusceptibility_processes(hmT, dex, runType, fH_sub_dir, saveTabs, tabs_savepath, groupOralFentOutput_figs, groupOralFentOutput_savepath, figsave_type);
+        fH_ivT = IS_processes(hmT, dex, runType, corrGroups, violSubsets, ...
+                              violGroups, violLabels, pcaGroups, fH_sub_dir, ...
+                              saveTabs, tabs_savepath, groupOralFentOutput_figs, ...
+                              groupOralFentOutput_savepath, figsave_type);
     end
 end

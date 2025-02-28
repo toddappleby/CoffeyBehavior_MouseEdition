@@ -8,7 +8,7 @@ function [mT] = removeExcludedData(mT, mKey)
             sess = strsplit(sess, ' ');
             tag = mKey.TagNumber(sub);
             for s = 1:length(sess)
-                ind = find((mT.TagNumber == tag) .* (mT.Session == str2double(sess{1})));
+                ind = find((mT.TagNumber == tag) .* (mT.Session == str2double(sess{s})));
                 RemoveSession(ind) = 1;
             end
         end      

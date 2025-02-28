@@ -2,7 +2,7 @@ function CorrFig(ct, prednames, sub_dir, subfolder, suffix, figsave_type)
 
     f = figure('Position',[1 1 700 600]);
     imagesc(ct,[-1 1]); % Display correlation matrix as an image
-    colormap(brewermap([],'Spectral'));
+    colormap(flipud(brewermap([],'RdBu')));
     a = colorbar();
     a.Label.String = 'Rho';
     a.Label.FontSize = 12;

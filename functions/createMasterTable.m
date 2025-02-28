@@ -83,6 +83,17 @@ function [mT] = createMasterTable(main_folder, beh_datapath, masterKey_flnm, exp
                     sessionType = categorical(string(expKey.SessionType{expKey_ind}));
                 end
 
+                % slideSession - Slide Days for looks
+                if sessionType == 'PreTraining'
+                    slideSession = varTable.Session;
+                elseif sessionType == 'Training'
+                    slideSession = varTable.Session + 1;
+                elseif sessionType == 'Extinction' || sessionType == 'BehavioralEconomics'
+                    slideSession = varTable.Session + 2;
+                elseif sessionType == 'Reinstatement' || sessionType == 'ReTraining'
+                    slideSession = varTable.Session + 3;
+                end
+
                 % Special case latency calc for Extinction trials
                 if sessionType == 'Extinction'
                     EC = varTable.eventCode{1};
@@ -98,7 +109,7 @@ function [mT] = createMasterTable(main_folder, beh_datapath, masterKey_flnm, exp
                 end
                 
                 % Concatenate the Master Table
-                drugIntakeTab = table(sessionType, Experiment, Run, Concentration, DoseVolume, Intake, totalIntake);
+                drugIntakeTab = table(sessionType, slideSession, Experiment, Run, Concentration, DoseVolume, Intake, totalIntake);
                 mT = [mT; [varTable, drugIntakeTab]];
             end
         end
