@@ -26,32 +26,37 @@ BE_intake_canonical_flnm = '.\2024.12.09.BE Intake Canonical.xlsx'; % Key for dr
 experimentKey_flnm = '.\Experiment Key.xlsx'; % Key for
 
 % MISC. SETTINGS
-runNum = '4_5'; % options: 'all' or desired runs separated by underscores (e.g. '1', '1_3_4', '3_2')
+runNum = 'all'; % options: 'all' or desired runs separated by underscores (e.g. '1', '1_3_4', '3_2')
 runType = 'all'; % options: 'ER' (Extinction Reinstatement), 'BE' (Behavioral Economics), 'SA' (Self Administration)
 createNewMasterTable = false; % true: generates & saves a new master table from medPC files in datapath. false: reads mT in from masterTable_flnm if set to false, otherwise 
 firstHour = false; % true: acquire data from the first-hour of data and analyze in addition to the full sessions
 excludeData = true; % true: excludes data based on the 'RemoveSession' column of masterSheet
 acquisition_thresh = 10; % to be labeled as "Acquire", animal must achieve an average number of infusions in the second weak of Training sessions greater than this threshold
-acquisition_testPeriod = {'Training', 'last', 5}; % determines sessions to average infusions across before applying acquisition_thresh. second value can be 'all', 'first', or 'last'. if 'first' or 'last', there should be a 3rd value giving the number of days to average across, or it will default to 1. 
+acquisition_testPeriod = {'Training', 'all'}; % determines sessions to average infusions across before applying acquisition_thresh. second value can be 'all', 'first', or 'last'. if 'first' or 'last', there should be a 3rd value giving the number of days to average across, or it will default to 1. 
 pAcq = true; % true: plot aquisition histogram to choose threshold 
 
 run_BE_analysis = true;
 run_withinSession_analysis = false;
-run_individualSusceptibility_analysis = true;
+run_individualSusceptibility_analysis = false;
 
 % FIGURE OPTIONS
 % Currently, if figures are generated they are also saved. 
 saveTabs = true; % true: save matlab tables of analyzed datasets
-dailyFigs = true; % true: generate daily figures from dailySAFigures.m
-pubFigs = true; % true: generate publication figures from pubSAFigures.m
-indivIntake_figs = true; % true: generate figures for individual animal behavior across & within sessions
+dailyFigs = false; % true: generate daily figures from dailySAFigures.m
+pubFigs = false; % true: generate publication figures from pubSAFigures.m
+indivIntake_figs = false; % true: generate figures for individual animal behavior across & within sessions
 groupIntake_figs = true; % true: generate figures grouped by sex, strain, etc. for animal behavior across & within sessions
-groupOralFentOutput_figs = true; % true: generate severity figures
+groupOralFentOutput_figs = false; % true: generate severity figures
 figsave_type = {'.png', '.pdf'};
-% color settings chosen for publication figures. SSnote: haven't been implemented for other figure-generating functions yet. 
+
+% color settings chosen for publication figures. SSnote: haven't been implemented across most figure-generating functions yet. 
 gramm_C57_Sex_colors = {'hue_range',[40 310],'lightness_range',[95 65],'chroma_range',[50 90]};
 gramm_CD1_Sex_colors = {'hue_range',[85 -200],'lightness_range',[85 75],'chroma_range',[75 90]};
 gramm_Strain_Acq_colors = {'hue_range',[25 385],'lightness_range',[95 60],'chroma_range',[50 70]};
+col_M_c57 = [0, 187/255, 144/255];
+col_F_c57 = [1, 107/255, 74/255];
+col_M_CD1 = [163/255, 137/255, 1];
+col_F_CD1 = [198/255, 151/255, 0];
 
 % SAVE PATHS
 % Each dataset run (determined by runNum and runType) will have its own
@@ -171,8 +176,9 @@ end
 %% Behavioral Economics Analysis 
 
 if any(ismember(runType, 'BE')) && run_BE_analysis
+    fig_colors = {[.5,.5,.5], col_F_c57, col_M_c57, col_F_CD1, col_M_CD1};
     BE_processes(mT(dex.BE, :), expKey, BE_intake_canonical_flnm, sub_dir, indivIntake_figs, ...
-                 groupIntake_figs, saveTabs, indivIntakefigs_savepath, groupIntakefigs_savepath, ...
+                 groupIntake_figs, saveTabs, fig_colors, indivIntakefigs_savepath, groupIntakefigs_savepath, ...
                  tabs_savepath, figsave_type);
     if firstHour
         BE_processes(hmT(dex.BE, :), expKey, BE_intake_canonical_flnm, fH_sub_dir, indivIntake_figs, ...
