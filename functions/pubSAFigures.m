@@ -513,6 +513,8 @@ function [g] = plotPubFig(pT, runType, yVar, yLab, forceY, cVar, subInd, titles,
     for fst = 1:length(figsave_type)
         if strcmp(figsave_type{fst}, '.pdf')
             exportgraphics(gcf,[figName, figsave_type{fst}], 'ContentType','vector')
+        elseif strcmp(figsave_type{fst}, '.fig')
+            savefig(gcf,[figName, figsave_type{fst}]);
         else
             exportgraphics(gcf,[figName, figsave_type{fst}]);
         end
@@ -547,6 +549,8 @@ function [g] = plotPubFig(pT, runType, yVar, yLab, forceY, cVar, subInd, titles,
     for fst = 1:length(figsave_type)
         if strcmp(figsave_type{fst}, '.pdf')
             exportgraphics(gcf,[figName, '_Donut', figsave_type{fst}], 'ContentType','vector')
+        elseif strcmp(figsave_type{fst}, '.fig')
+            savefig(gcf,[figName, figsave_type{fst}]);
         else
             exportgraphics(gcf,[figName, '_Donut', figsave_type{fst}]);
         end

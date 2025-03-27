@@ -17,7 +17,7 @@ function gramm_GroupFig(tab, xvar, yvar, xlab, ylab, figpath, figsave_type, vara
     parse(p, varargin{:});
     
     if isempty(p.Results.WrapOptions)
-        f = figure('Position',[100, 100, 500*length(yvar), 500],'Color',[1 1 1]);
+        f = figure('Position',[100, 100, 320*length(yvar), 300],'Color',[1 1 1]);
     else
         f = figure('units','normalized','outerposition',[0 0 1 1]);
     end
@@ -31,7 +31,7 @@ function gramm_GroupFig(tab, xvar, yvar, xlab, ylab, figpath, figsave_type, vara
                              varargin);
     end
     g.draw;
-    
+
     % FIGURE AXES EDITS
     str_inds = arrayfun(@(x) ischar(p.Results.StatOptions{x}), 1:length(p.Results.StatOptions));
     if any(ismember(p.Results.StatOptions(str_inds), 'cumcount'))
@@ -45,7 +45,7 @@ function gramm_GroupFig(tab, xvar, yvar, xlab, ylab, figpath, figsave_type, vara
     else
         stat_field = 'stat_summary';
         stat_yvar = 'y';
-        update_marker = false;
+        update_marker = true;
     end
 
     for sp = 1:length(yvar)
@@ -61,11 +61,9 @@ function gramm_GroupFig(tab, xvar, yvar, xlab, ylab, figpath, figsave_type, vara
                yMax = maxStat;
            end       
        end
-
-       yMax = (ceil(yMax/10)*10)+10;
-       g(1,sp).axe_property('YLim', [0 yMax], 'TickDir','out');
     end
     
+   
     % SAVE IT
     saveFigsByType(f, figpath, figsave_type);
     close(f);

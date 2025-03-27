@@ -28,26 +28,26 @@ experimentKey_flnm = '.\Experiment Key.xlsx'; % Key for
 % MISC. SETTINGS
 runNum = 'all'; % options: 'all' or desired runs separated by underscores (e.g. '1', '1_3_4', '3_2')
 runType = 'all'; % options: 'ER' (Extinction Reinstatement), 'BE' (Behavioral Economics), 'SA' (Self Administration)
-createNewMasterTable = false; % true: generates & saves a new master table from medPC files in datapath. false: reads mT in from masterTable_flnm if set to false, otherwise 
-firstHour = false; % true: acquire data from the first-hour of data and analyze in addition to the full sessions
+createNewMasterTable = true; % true: generates & saves a new master table from medPC files in datapath. false: reads mT in from masterTable_flnm if set to false, otherwise 
+firstHour = true; % true: acquire data from the first-hour of data and analyze in addition to the full sessions
 excludeData = true; % true: excludes data based on the 'RemoveSession' column of masterSheet
 acquisition_thresh = 10; % to be labeled as "Acquire", animal must achieve an average number of infusions in the second weak of Training sessions greater than this threshold
 acquisition_testPeriod = {'Training', 'all'}; % determines sessions to average infusions across before applying acquisition_thresh. second value can be 'all', 'first', or 'last'. if 'first' or 'last', there should be a 3rd value giving the number of days to average across, or it will default to 1. 
 pAcq = true; % true: plot aquisition histogram to choose threshold 
 
 run_BE_analysis = true;
-run_withinSession_analysis = false;
-run_individualSusceptibility_analysis = false;
+run_withinSession_analysis = true;
+run_individualSusceptibility_analysis = true;
 
 % FIGURE OPTIONS
 % Currently, if figures are generated they are also saved. 
 saveTabs = true; % true: save matlab tables of analyzed datasets
 dailyFigs = false; % true: generate daily figures from dailySAFigures.m
-pubFigs = false; % true: generate publication figures from pubSAFigures.m
+pubFigs = true; % true: generate publication figures from pubSAFigures.m
 indivIntake_figs = false; % true: generate figures for individual animal behavior across & within sessions
 groupIntake_figs = true; % true: generate figures grouped by sex, strain, etc. for animal behavior across & within sessions
-groupOralFentOutput_figs = false; % true: generate severity figures
-figsave_type = {'.png', '.pdf'};
+groupOralFentOutput_figs = true; % true: generate severity figures
+figsave_type = {'.png','.fig'};
 
 % color settings chosen for publication figures. SSnote: haven't been implemented across most figure-generating functions yet. 
 gramm_C57_Sex_colors = {'hue_range',[40 310],'lightness_range',[95 65],'chroma_range',[50 90]};
@@ -180,28 +180,29 @@ if any(ismember(runType, 'BE')) && run_BE_analysis
     BE_processes(mT(dex.BE, :), expKey, BE_intake_canonical_flnm, sub_dir, indivIntake_figs, ...
                  groupIntake_figs, saveTabs, fig_colors, indivIntakefigs_savepath, groupIntakefigs_savepath, ...
                  tabs_savepath, figsave_type);
-    if firstHour
-        BE_processes(hmT(dex.BE, :), expKey, BE_intake_canonical_flnm, fH_sub_dir, indivIntake_figs, ...
-                     groupIntake_figs, saveTabs, indivIntakefigs_savepath, groupIntakefigs_savepath, ...
-                     tabs_savepath, figsave_type);
-    end
+    % if firstHour
+    %     BE_processes(hmT(dex.BE, :), expKey, BE_intake_canonical_flnm, fH_sub_dir, indivIntake_figs, ...
+    %                  groupIntake_figs, saveTabs, indivIntakefigs_savepath, groupIntakefigs_savepath, ...
+    %                  tabs_savepath, figsave_type);
+    % end
 end
 
 %% Within Session Behavioral Analysis 
 
 if run_withinSession_analysis
-    [mTDL, mPressT, mDrugsLT] = WithinSession_Processes(mT, dex, sub_dir, indivIntake_figs, indivIntakefigs_savepath, groupIntake_figs, groupIntakefigs_savepath, saveTabs, tabs_savepath, figsave_type);
+    fig_colors = {[.5,.5,.5], col_F_c57, col_M_c57, col_F_CD1, col_M_CD1};
+    [mTDL, mPressT, mDrugsLT] = WithinSession_Processes(mT, dex, sub_dir, indivIntake_figs, indivIntakefigs_savepath, groupIntake_figs, groupIntakefigs_savepath, saveTabs, tabs_savepath, figsave_type,fig_colors);
 end
 
 %% Statistic Linear Mixed Effects Models
-
 statsname=[sub_dir, tabs_savepath, 'Oral SA Group Stats '];
 
 % Training
 data = mT(mT.sessionType == 'Training',:);
 dep_var = ["Intake", "EarnedInfusions", "HeadEntries", "Latency", "ActiveLever", "InactiveLever"];
 lme_form = " ~ Sex*Session + (1|TagNumber)";
-if ~isempty(data)
+      xlabel('Responses/mg/mL');
+            ylabel('Fentanyl Intake (μg/kg)');if ~isempty(data)
     Training_LMEstats = getLMEstats(data, dep_var, lme_form);
     if saveTabs
         save([statsname, 'SA'], 'Training_LMEstats');

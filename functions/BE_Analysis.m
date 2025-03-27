@@ -47,7 +47,7 @@ function [beT, beiT, BE_IndivFit, BE_GroupFit] = BE_Analysis(mT, expKey, BE_inta
         price=beT.unitPrice(beT.TagNumber==ID(i));
         price(in == 0) = [];
         in(in == 0) = []; 
-        price=price-min(price)+1;
+        % price=price-min(price)+1; I don't think this is nessecary
 
         fitX{i} = price;
         fitY{i} = log(in);
@@ -88,7 +88,7 @@ function [beT, beiT, BE_IndivFit, BE_GroupFit] = BE_Analysis(mT, expKey, BE_inta
         price = beT.unitPrice(find(subgroups{sg}));
         price(intake == 0) = [];
         intake(intake == 0) = []; 
-        price = price-min(price)+1;
+        % price = price-min(price)+1; I don't think this is nessecary
         if length(intake) > 1
 
             uni_price = unique(price);

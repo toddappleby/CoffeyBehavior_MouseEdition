@@ -127,8 +127,7 @@ switch p.Results.type
         k12 = 0.233; % Pan & Justice 1991
         k21 = 0.212; % Pan & Justice 1991
         %kel = 0.294; % Pan & Justice 1991
-        % kel = 0.175; % Pan & Justice 1991
-        kel = 0.294; % Pan & Justice 1991
+        kel = 0.4; % Coffey Guess 2025
         ALPHA = 0.5*((k12 + k21 + kel)+sqrt((k12 + k21 + kel)^2-(4*k21*kel))); %%%% Represent the redistribution of Cocaine. Calculated using Pan et al. 1991 eqn. 0.06667 with Lau and Sun 2002 values for 0.5 mg/kg dose (see paper for justification)
         BETA = 0.5*((k12 + k21 + kel)-sqrt((k12 + k21 + kel)^2-(4*k21*kel))); %%%% Represent the Elimination of Cocaine. Calculated using Pan et al. 1991 eqn. 0.0193 here with Lau and Sun 2002 values for 0.5 mg/kg dose
         VOLUME = .15; %%%% Brain Apperant Volume of distribution in L per kg
