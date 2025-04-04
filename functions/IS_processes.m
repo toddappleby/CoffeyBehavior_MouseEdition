@@ -38,9 +38,12 @@ function [ivT] = IS_processes(mT, dex, runType, corrGroups, violSubsets, violGro
                 if ~strcmp(violSubsets{vg}{1}, 'all')
                     subset = subset & (thistab.(violSubsets{vg}{1}) == violSubsets{vg}{2});
                 end
-                if ~isempty(find(subset, 1)) && length(unique(thistab(subset,:).(violGroups{vg}))) > 1
-                    ViolinFig(thistab(logical(subset), :), violGroups{vg}, [z_suff{zg}, '_', violLabels{vg}], includeER(zg), sub_dir, groupOralFentOutput_savepath, figsave_type)
-                else
+                % if ~isempty(find(subset, 1)) && length(unique(thistab(subset,:).(violGroups{vg}))) > 1
+                %     ViolinFig(thistab(logical(subset), :), violGroups{vg}, [z_suff{zg}, '_', violLabels{vg}], includeER(zg), sub_dir, groupOralFentOutput_savepath, figsave_type)
+                % else
+                try
+                    ViolinFig(thistab(logical(subset), :), violGroups{vg}, [z_suff{zg}, '_', violLabels{vg}], includeER(zg), sub_dir, groupOralFentOutput_savepath, figsave_type, violLabels{vg})
+                catch
                     disp(['no data available for violin plot: ', z_suff{zg}, '_', violLabels{vg}])
                 end
             end

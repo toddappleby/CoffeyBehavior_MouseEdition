@@ -28,7 +28,7 @@ experimentKey_flnm = '.\Experiment Key.xlsx'; % Key for
 % MISC. SETTINGS
 runNum = 'all'; % options: 'all' or desired runs separated by underscores (e.g. '1', '1_3_4', '3_2')
 runType = 'all'; % options: 'ER' (Extinction Reinstatement), 'BE' (Behavioral Economics), 'SA' (Self Administration)
-createNewMasterTable = true; % true: generates & saves a new master table from medPC files in datapath. false: reads mT in from masterTable_flnm if set to false, otherwise 
+createNewMasterTable = false; % true: generates & saves a new master table from medPC files in datapath. false: reads mT in from masterTable_flnm if set to false, otherwise 
 firstHour = true; % true: acquire data from the first-hour of data and analyze in addition to the full sessions
 excludeData = true; % true: excludes data based on the 'RemoveSession' column of masterSheet
 acquisition_thresh = 10; % to be labeled as "Acquire", animal must achieve an average number of infusions in the second weak of Training sessions greater than this threshold
@@ -44,7 +44,7 @@ run_individualSusceptibility_analysis = true;
 saveTabs = true; % true: save matlab tables of analyzed datasets
 dailyFigs = false; % true: generate daily figures from dailySAFigures.m
 pubFigs = true; % true: generate publication figures from pubSAFigures.m
-indivIntake_figs = false; % true: generate figures for individual animal behavior across & within sessions
+indivIntake_figs = true; % true: generate figures for individual animal behavior across & within sessions
 groupIntake_figs = true; % true: generate figures grouped by sex, strain, etc. for animal behavior across & within sessions
 groupOralFentOutput_figs = true; % true: generate severity figures
 figsave_type = {'.png','.fig'};
@@ -53,10 +53,10 @@ figsave_type = {'.png','.fig'};
 gramm_C57_Sex_colors = {'hue_range',[40 310],'lightness_range',[95 65],'chroma_range',[50 90]};
 gramm_CD1_Sex_colors = {'hue_range',[85 -200],'lightness_range',[85 75],'chroma_range',[75 90]};
 gramm_Strain_Acq_colors = {'hue_range',[25 385],'lightness_range',[95 60],'chroma_range',[50 70]};
-col_M_c57 = [0, 187/255, 144/255];
-col_F_c57 = [1, 107/255, 74/255];
-col_M_CD1 = [163/255, 137/255, 1];
-col_F_CD1 = [198/255, 151/255, 0];
+col_M_c57 = [0, 0.7333, 0.5647];
+col_F_c57 = [1, 0.4196, 0.2902];
+col_M_CD1 = [0.6392, 0.5373, 1];
+col_F_CD1 = [0.7765, 0.5922, 0];
 
 % SAVE PATHS
 % Each dataset run (determined by runNum and runType) will have its own
@@ -65,12 +65,12 @@ col_F_CD1 = [198/255, 151/255, 0];
 % data saved. 
 % Currently only daily & publication figures are saved with current date in
 % the file name, so be aware of overwrite risk for other figures.
-allfig_savefolder = 'All Figures\';
+allfig_savefolder = 'Output\';
 dailyfigs_savepath = 'Daily Figures\';
 pubfigs_savepath = 'Publication Figures\';
 indivIntakefigs_savepath = 'Individual Intake Figures\';
 groupIntakefigs_savepath ='Group Intake Figures\'; 
-groupOralFentOutput_savepath = 'Combined Oral Fentanyl Output\';
+groupOralFentOutput_savepath = 'Severity Output\';
 tabs_savepath = 'Behavior Tables\';
 
 %% HOUSEKEEPING
@@ -202,7 +202,8 @@ data = mT(mT.sessionType == 'Training',:);
 dep_var = ["Intake", "EarnedInfusions", "HeadEntries", "Latency", "ActiveLever", "InactiveLever"];
 lme_form = " ~ Sex*Session + (1|TagNumber)";
       xlabel('Responses/mg/mL');
-            ylabel('Fentanyl Intake (μg/kg)');if ~isempty(data)
+            ylabel('Fentanyl Intake (μg/kg)');
+if ~isempty(data)
     Training_LMEstats = getLMEstats(data, dep_var, lme_form);
     if saveTabs
         save([statsname, 'SA'], 'Training_LMEstats');

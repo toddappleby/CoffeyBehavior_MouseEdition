@@ -41,7 +41,7 @@ function [mTDL, mPressT, mDrugLT] = WithinSession_Processes(mT, dex, sub_dir, in
         infDur = 4; % duration of infusion in seconds
         sessDur = 180; % duration of session in minutes
 
-        [DL, DLTime] = pharmacokineticsMouseOralFent('infusions',[rewHE*1000 (rewHE+(doseHE*infDur*1000))],'duration',sessDur,'type',4,'weight',mTDL.Weight(i)./1000,'mg_mL',conc/100,'mL_S',mTDL.DoseVolume(i)/infDur);
+        [DL, DLTime] = pharmacokineticsMouseOralFent('infusions',[rewHE*1000 (rewHE+(doseHE*infDur))*1000],'duration',sessDur,'type',4,'weight',mTDL.Weight(i)./1000,'mg_mL',conc/1000,'mL_S',mTDL.DoseVolume(i)/infDur);
         DL = imresize(DL', [length(DLTime),1]);
         DLTime = DLTime';
 
@@ -58,8 +58,8 @@ function [mTDL, mPressT, mDrugLT] = WithinSession_Processes(mT, dex, sub_dir, in
         end
 
         if indivIntake_figs 
-            figpath = [sub_dir, indivIntakefigs_savepath, 'Tag', char(mTDL.TagNumber(i)), '_Session', char(string(mTDL.Session(i))), '_cumolDose_and_estBrainFent'];
-            indiv_sessionIntakeBrainFentFig({adj_rewLP/60, DLTime}, {cumulDoseHE, DL(:)*1000}, figpath, figsave_type);
+            figpath = [sub_dir, indivIntakefigs_savepath, 'Tag', char(mTDL.TagNumber(i)), '_Session', char(string(mTDL.Session(i))), '_ugkgDose_and_estBrainFent'];
+            indiv_sessionIntakeBrainFentFig({adj_rewLP/60, DLTime}, {cumulDoseHE, DL(:)}, figpath, figsave_type);
         end
     end
     close(wb)
@@ -79,7 +79,7 @@ function [mTDL, mPressT, mDrugLT] = WithinSession_Processes(mT, dex, sub_dir, in
 
             figpath = [sub_dir, indivIntakefigs_savepath, 'Tag', char(IDs(j)), '_allSessionEstBrainFent'];
             indiv_allSessionFig(mDrugLT, mDrugLT.TagNumber==IDs(j), 'DLTime', "Time (m)", ...
-                                'DL', "Estimated Brain Fentanyl (pMOL)", ...
+                                'DL', "Estimated Brain Fentanyl (ug/kg)", ...
                                  ['ID: ' char(IDs(j))], 'Session', figpath, figsave_type, 'line');
         end
 
@@ -106,7 +106,7 @@ function [mTDL, mPressT, mDrugLT] = WithinSession_Processes(mT, dex, sub_dir, in
                     grammOptions = {'lightness', subTab.Session};
                     statOptions = {'area'};
                    
-                    gramm_GroupFig(subTab, "DLTime", "DL", "Time (m)", "Estimated Brain Fentanyl (pMOL)", ...
+                    gramm_GroupFig(subTab, "DLTime", "DL", "Time (m)", "Estimated Brain Fentanyl (ug/kg)", ...
                                    figpath, figsave_type, 'GrammOptions', grammOptions, 'LegOptions', legOptions);    
                 end
             end
@@ -123,51 +123,51 @@ function [mTDL, mPressT, mDrugLT] = WithinSession_Processes(mT, dex, sub_dir, in
 
         % Drug Level by Strain and Sex
         figpath = [sub_dir, groupIntakefigs_savepath, 'Drug Level Grouped by Sex c57'];
-        grammOptions = {'color', mDrugLT.Sex, 'subset', mDrugLT.Strain == 'c57'};
+        grammOptions = {'color', mDrugLT.Sex, 'subset', mDrugLT.Strain == 'c57' & mDrugLT.Session <=15};
         statOptions = {'geom', 'area', 'setylim',1};
-        gramm_GroupFig(mDrugLT, "DLTime", "DL", "Time (m)", "Estimated Brain Fentanyl (pMOL)", figpath, figsave_type, ...
+        gramm_GroupFig(mDrugLT, "DLTime", "DL", "Time (m)", "Estimated Brain Fentanyl (ug/kg)", figpath, figsave_type, ...
                       'GrammOptions', grammOptions, 'StatOptions', statOptions, 'WrapOptions', wrapOptions, 'AxOptions', axOptions, 'LegOptions', legOptions,'ColorOptions',colorOptions{1})
 
          % Drug Level by Strain and Sex
         figpath = [sub_dir, groupIntakefigs_savepath, 'Drug Level Grouped by Sex CD1'];
-        grammOptions = {'color', mDrugLT.Sex, 'subset', mDrugLT.Strain == 'CD1'};
+        grammOptions = {'color', mDrugLT.Sex, 'subset', mDrugLT.Strain == 'CD1' & mDrugLT.Session <=15};
         statOptions = {'geom', 'area', 'setylim',1};
-        gramm_GroupFig(mDrugLT, "DLTime", "DL", "Time (m)", "Estimated Brain Fentanyl (pMOL)", figpath, figsave_type, ...
+        gramm_GroupFig(mDrugLT, "DLTime", "DL", "Time (m)", "Estimated Brain Fentanyl (ug/kg)", figpath, figsave_type, ...
                       'GrammOptions', grammOptions, 'StatOptions', statOptions, 'WrapOptions', wrapOptions, 'AxOptions', axOptions, 'LegOptions', legOptions,'ColorOptions',colorOptions{2})
 
         % Drug Level by Strain and Sex during Training
         figpath = [sub_dir,groupIntakefigs_savepath, 'Drug Level Grouped by Sex during Training c57'];
         grammOptions = {'color', mDrugLT.Sex, 'subset', mDrugLT.sessionType=='Training' & mDrugLT.Strain == 'c57'};
-        gramm_GroupFig(mDrugLT, "DLTime", "DL", "Time (m)", "Estimated Brain Fentanyl (pMOL)", figpath, figsave_type, ...
+        gramm_GroupFig(mDrugLT, "DLTime", "DL", "Time (m)", "Estimated Brain Fentanyl (ug/kg)", figpath, figsave_type, ...
                       'GrammOptions', grammOptions, 'StatOptions', statOptions, 'WrapOptions', wrapOptions, 'AxOptions', axOptions, 'LegOptions', legOptions,'ColorOptions',colorOptions{1})
        
         % Drug Level by Strain and Sex during Training
         figpath = [sub_dir,groupIntakefigs_savepath, 'Drug Level Grouped by Sex during Training CD1'];
         grammOptions = {'color', mDrugLT.Sex, 'subset', mDrugLT.sessionType=='Training' & mDrugLT.Strain == 'CD1'};
-        gramm_GroupFig(mDrugLT, "DLTime", "DL", "Time (m)", "Estimated Brain Fentanyl (pMOL)", figpath, figsave_type, ...
+        gramm_GroupFig(mDrugLT, "DLTime", "DL", "Time (m)", "Estimated Brain Fentanyl (ug/kg)", figpath, figsave_type, ...
                       'GrammOptions', grammOptions, 'StatOptions', statOptions, 'WrapOptions', wrapOptions, 'AxOptions', axOptions, 'LegOptions', legOptions,'ColorOptions',colorOptions{2})
 
         % Drug Level by Sex and Session during Training Sessions 5, 10, 15
         figpath = [sub_dir, groupIntakefigs_savepath, 'Drug Level Grouped by Sex and Session 5 10 15 c57'];
-        subset = (mDrugLT.Session==5 | mDrugLT.Session==10 | mDrugLT.Session==15 & mDrugLT.Strain == 'c57');
-        grammOptions = {'color', mDrugLT.Sex, 'subset', subset};
-        statOptions = {'geom', 'line', 'setylim', 1};
+        %subset = (mDrugLT.Session==5 | mDrugLT.Session==10 | mDrugLT.Session==15 & mDrugLT.Strain == 'c57');
+        grammOptions = {'color', mDrugLT.Sex, 'subset', (mDrugLT.Session==5 | mDrugLT.Session==10 | mDrugLT.Session==15) & mDrugLT.Strain == 'c57'};
+        statOptions = {'geom', 'area', 'setylim', 1};
         wrapOptions = {mDrugLT.Session,'scale','independent','ncols',3,'column_labels',1}; %'force_ticks',1,
-        gramm_GroupFig(mDrugLT, "DLTime", "DL", "Time (m)", "Estimated Brain Fentanyl (pMOL)", figpath, figsave_type, ...
+        gramm_GroupFig(mDrugLT, "DLTime", "DL", "Time (m)", "Estimated Brain Fentanyl (ug/kg)", figpath, figsave_type, ...
                        'GrammOptions', grammOptions, 'StatOptions', statOptions, 'WrapOptions', wrapOptions, 'AxOptions', axOptions, 'LegOptions', legOptions,'ColorOptions',colorOptions{1})
 
         % Drug Level by Sex and Session during Training Sessions 5, 10, 15
         figpath = [sub_dir, groupIntakefigs_savepath, 'Drug Level Grouped by Sex and Session 5 10 15 CD1'];
-        subset = (mDrugLT.Session==5 | mDrugLT.Session==10 | mDrugLT.Session==15 & mDrugLT.Strain == 'CD1');
-        grammOptions = {'color', mDrugLT.Sex, 'subset', subset};
-        statOptions = {'geom', 'line', 'setylim', 1};
+        %subset = (mDrugLT.Session==5 | mDrugLT.Session==10 | mDrugLT.Session==15 & mDrugLT.Strain == 'CD1');
+        grammOptions = {'color', mDrugLT.Sex, 'subset', (mDrugLT.Session==5 | mDrugLT.Session==10 | mDrugLT.Session==15) & mDrugLT.Strain == 'CD1'};
+        statOptions = {'geom', 'area', 'setylim', 1};
         wrapOptions = {mDrugLT.Session,'scale','independent','ncols',3,'column_labels',1}; %'force_ticks',1,
-        gramm_GroupFig(mDrugLT, "DLTime", "DL", "Time (m)", "Estimated Brain Fentanyl (pMOL)", figpath, figsave_type, ...
+        gramm_GroupFig(mDrugLT, "DLTime", "DL", "Time (m)", "Estimated Brain Fentanyl (ug/kg)", figpath, figsave_type, ...
                        'GrammOptions', grammOptions, 'StatOptions', statOptions, 'WrapOptions', wrapOptions, 'AxOptions', axOptions, 'LegOptions', legOptions,'ColorOptions',colorOptions{2})
 
         % Cumulative responses (rewarded head entries) by Sex and Session during Training Sessions 5, 10, 15
         figpath = [sub_dir, groupIntakefigs_savepath, 'Cumulative Responses Grouped by Sex and Session 5 10 15 c57'];
-        subset = (mPressT.Session==5 | mPressT.Session==10 | mPressT.Session==15 & mPressT.Strain == 'c57');
+        subset = ((mPressT.Session==5 | mPressT.Session==10 | mPressT.Session==15) & mPressT.Strain == 'c57');
         grammOptions = {'color', mPressT.Sex, 'subset', subset};
         statOptions = {'normalization','cumcount','geom','stairs','edges',0:1:180};
         wrapOptions = {mPressT.Session,'scale','independent','ncols',3,'column_labels',1}; %'force_ticks',1,
@@ -175,13 +175,34 @@ function [mTDL, mPressT, mDrugLT] = WithinSession_Processes(mT, dex, sub_dir, in
                        'GrammOptions', grammOptions, 'StatOptions', statOptions, 'WrapOptions', wrapOptions, 'AxOptions', axOptions, 'LegOptions', legOptions,'ColorOptions',colorOptions{1})
 
                 % Cumulative responses (rewarded head entries) by Sex and Session during Training Sessions 5, 10, 15
-        figpath = [sub_dir, groupIntakefigs_savepath, 'Cumulative Responses Grouped by Sex and Session 5 10 15 c57'];
-        subset = (mPressT.Session==5 | mPressT.Session==10 | mPressT.Session==15 & mPressT.Strain == 'CD1');
+        figpath = [sub_dir, groupIntakefigs_savepath, 'Cumulative Responses Grouped by Sex and Session 5 10 15 CD1'];
+        subset = ((mPressT.Session==5 | mPressT.Session==10 | mPressT.Session==15) & mPressT.Strain == 'CD1');
         grammOptions = {'color', mPressT.Sex, 'subset', subset};
         statOptions = {'normalization','cumcount','geom','stairs','edges',0:1:180};
         wrapOptions = {mPressT.Session,'scale','independent','ncols',3,'column_labels',1}; %'force_ticks',1,
         gramm_GroupFig(mPressT, "adj_rewLP_div60", "cumulDoseHE", "Time (m)", "Cumulative Responses", figpath, figsave_type, ...
                        'GrammOptions', grammOptions, 'StatOptions', statOptions, 'WrapOptions', wrapOptions, 'AxOptions', axOptions, 'LegOptions', legOptions,'ColorOptions',colorOptions{2})
+
+         % Drug Level by Sex and Session during Training Sessions 5, 10, 15
+        figpath = [sub_dir, groupIntakefigs_savepath, 'Drug Level Grouped by Sex and Behavioral Economics c57'];
+        %subset = (mDrugLT.Session==5 | mDrugLT.Session==10 | mDrugLT.Session==15 & mDrugLT.Strain == 'c57');
+        grammOptions = {'color', mDrugLT.Sex, 'Lightness',mDrugLT.Session, 'subset', mDrugLT.sessionType=='BehavioralEconomics' & mDrugLT.Strain == 'c57'};
+        statOptions = {'geom', 'line', 'setylim', 1};
+        wrapOptions = {mDrugLT.Session,'scale','independent','ncols',3,'column_labels',1}; %'force_ticks',1,
+        gramm_GroupFig(mDrugLT, "DLTime", "DL", "Time (m)", "Estimated Brain Fentanyl (ug/kg)", figpath, figsave_type, ...
+                       'GrammOptions', grammOptions, 'StatOptions', statOptions, 'AxOptions', axOptions, 'LegOptions', legOptions,'ColorOptions',colorOptions{1})
+
+         % Drug Level by Sex and Session during Training Sessions 5, 10, 15
+        figpath = [sub_dir, groupIntakefigs_savepath, 'Drug Level Grouped by Sex and Behavioral Economics CD1'];
+        %subset = (mDrugLT.Session==5 | mDrugLT.Session==10 | mDrugLT.Session==15 & mDrugLT.Strain == 'c57');
+        grammOptions = {'color', mDrugLT.Sex, 'Lightness',mDrugLT.Session, 'subset', mDrugLT.sessionType=='BehavioralEconomics' & mDrugLT.Strain == 'CD1'};
+        statOptions = {'geom', 'line', 'setylim', 1};
+        wrapOptions = {mDrugLT.Session,'scale','independent','ncols',3,'column_labels',1}; %'force_ticks',1,
+        gramm_GroupFig(mDrugLT, "DLTime", "DL", "Time (m)", "Estimated Brain Fentanyl (ug/kg)", figpath, figsave_type, ...
+                       'GrammOptions', grammOptions, 'StatOptions', statOptions, 'AxOptions', axOptions, 'LegOptions', legOptions,'ColorOptions',colorOptions{2})
+
+
+
 
     end
 end

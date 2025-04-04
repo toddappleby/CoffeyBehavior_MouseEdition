@@ -1,4 +1,4 @@
-function ViolinFig(ivT, group, label, includeER, sub_dir, groupOralFentOutput_savepath, figsave_type)
+function ViolinFig(ivT, group, label, includeER, sub_dir, groupOralFentOutput_savepath, figsave_type, violLabels)
     % Violin plots
     
 
@@ -12,7 +12,7 @@ function ViolinFig(ivT, group, label, includeER, sub_dir, groupOralFentOutput_sa
                  'Escalation (slope Training Intake)', 'Severity' };
     end
 
-    f = plotViolins(ivT, yVars, yLabs, group);
+    f = plotViolins(ivT, yVars, yLabs, group, violLabels);
     saveFigsByType(f, [sub_dir, groupOralFentOutput_savepath, 'Violin', label], figsave_type)
     close(f)
 end

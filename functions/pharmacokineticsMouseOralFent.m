@@ -23,7 +23,7 @@ addParameter(p,'weight', []); % Rat weight in grams
 addParameter(p,'makeFig',1);
 addParameter(p,'mg_mL', []); % Fentanyl concentration (mg/mL)
 addParameter(p,'mL_S', []); % pump flow rate (mL/sec)
-addParameter(p,'mg_Kg_s', 0.00805 / 6.8992); % Fentanyl mg/Kg/sec
+addParameter(p,'mg_Kg_s', 0.0455 / 4); % Fentanyl mg/Kg/sec
 parse(p,varargin{:});
 
 
@@ -31,12 +31,13 @@ parse(p,varargin{:});
 molarMass = .336471; % Fentanyl (336.471g/MOLE or .336471mg/uMOLE)
 % If mg/mL, mL/sec, and weight are given, use this to calculate mg/Kg/second
 if length([p.Results.mg_mL, p.Results.mL_S, p.Results.weight]) == 3
-    MGKGDOSE = p.Results.mg_mL * p.Results.mL_S; % mg/sec = mg/mL * mL/sec
-    MGKGDOSE = 1000 * MGKGDOSE / p.Results.weight; % mg/Kg/sec = mg/sec / (mg * 1000)
+    MGSEC = p.Results.mg_mL * p.Results.mL_S; % mg/sec = mg/mL * mL/sec
+    MGKGSEC = MGSEC / p.Results.weight;
+    UGKGSEC = 1000 * MGSEC / p.Results.weight; % mg/Kg/sec = mg/sec / (ug * 1000)
 else % use the value supplied
-    MGKGDOSE = p.Results.mg_Kg_s; % Cocaine mg/Kg/sec
+    MGKGSEC = p.Results.mg_Kg_s; % Cocaine mg/Kg/sec
 end
-uMDOSE = MGKGDOSE/molarMass; % uM per Kg per second 
+uMSec = MGKGSEC*1000/molarMass; % uM per Kg per second 
 
 %% Length of the session
 SESSIONLENGTH = p.Results.duration;
@@ -49,6 +50,7 @@ SESSIONLENGTH = round(SESSIONLENGTH);
 infusionStart = p.Results.infusions(:,1) / 1000; % Infusion Start in 1s Units
 infusionEnd   = p.Results.infusions(:,2) / 1000; % Infusion End in 1s Units
 infusionDuration = infusionEnd - infusionStart; % Infusion Duration in 1s Units
+MGKGDOSE = MGKGSEC*infusionDuration(1);
 
         
 switch p.Results.type
@@ -94,7 +96,7 @@ switch p.Results.type
         % Calculate Drug Level for Each Infusion seperately
         for i = 1:length(infusionDuration)
             for j = round(infusionStart(i,1))+1:(SESSIONLENGTH*60)
-                inf_dl(i,j)=(((uMDOSE*infusionDuration(i,1))*(k12))/(VOLUME*(ALPHA-BETA)))*(exp(-BETA*((j-round(infusionStart(i,1)))/60))-exp(-ALPHA*((j-round(infusionStart(i,1)))/60)));
+                inf_dl(i,j)=(((uMSec*infusionDuration(i,1))*(k12))/(VOLUME*(ALPHA-BETA)))*(exp(-BETA*((j-round(infusionStart(i,1)))/60))-exp(-ALPHA*((j-round(infusionStart(i,1)))/60)));
             end
         end
         druglevel=sum(inf_dl); % Sum Individual Infusion Drug Levels
@@ -114,7 +116,7 @@ switch p.Results.type
         % Calculate Drug Level for Each Infusion seperately
         for i = 1:length(infusionDuration)
             for j = round(infusionStart(i,1))+1:(SESSIONLENGTH*60)
-                inf_dl(i,j)=(((uMDOSE*infusionDuration(i,1)))/(VOLUME*(ALPHA-BETA)))*(((k12-BETA)*exp(-BETA*((j-round(infusionStart(i,1)))/60)))-((k12-ALPHA)*exp(-ALPHA*((j-round(infusionStart(i,1)))/60))));
+                inf_dl(i,j)=(((uMSec*infusionDuration(i,1)))/(VOLUME*(ALPHA-BETA)))*(((k12-BETA)*exp(-BETA*((j-round(infusionStart(i,1)))/60)))-((k12-ALPHA)*exp(-ALPHA*((j-round(infusionStart(i,1)))/60))));
             end
         end
         druglevel=sum(inf_dl); % Sum Individual Infusion Drug Levels
@@ -122,24 +124,54 @@ switch p.Results.type
         
         %% %%%%%%%%%%%%%%% TYPE 4: Intraparitoneal Estimated Brain Level %%%%%%%%%
         %%%%%%%%%%%%%%%%%%     Concentration in uMole/L or uM       %%%%%%%%%%%%%%
+        %%%%%%%%%%%%%%%%%%     Concentration in ug/kg               %%%%%%%%%%%%%%
+
     case 4
+        % % Variables For the (Type 4) 2 Compartment - IP Estimated Brain Levels
+        % k12 = 0.233; % Pan & Justice 1991
+        % k21 = 0.212; % Pan & Justice 1991
+        % %kel = 0.294; % Pan & Justice 1991
+        % kel = 0.4; % Coffey Guess 2025
+        % ALPHA = 0.5*((k12 + k21 + kel)+sqrt((k12 + k21 + kel)^2-(4*k21*kel))); %%%% Represent the redistribution of Cocaine. Calculated using Pan et al. 1991 eqn. 0.06667 with Lau and Sun 2002 values for 0.5 mg/kg dose (see paper for justification)
+        % BETA = 0.5*((k12 + k21 + kel)-sqrt((k12 + k21 + kel)^2-(4*k21*kel))); %%%% Represent the Elimination of Cocaine. Calculated using Pan et al. 1991 eqn. 0.0193 here with Lau and Sun 2002 values for 0.5 mg/kg dose
+        % VOLUME = .15; %%%% Brain Apperant Volume of distribution in L per kg
+        % F=.8581; % Derived from 30mg/kg estimated parameter (F*88.28uMol/kg)/(Volime Distribution Blood l/kg)-(Pan & Justice 1990)
+        % %kA= .0248; % Pan & Justice 1990
+        % kA= .0125; % Pan & Justice 1990
+        % % K_FLOW = .233; %%%% Represents the flow between the two compartments
+        % inf_dl=zeros(length(infusionStart),SESSIONLENGTH*60);% Pre allocate array
+        % % Calculate Drug Level for Each Infusion seperately
+        % for i = 1:length(infusionStart)
+        %     for j = round(infusionStart(i,1))+1:(SESSIONLENGTH*60)
+        %         inf_dl(i,j)=(F*(uMSec*infusionDuration(i,1))*kA*k21/VOLUME)*...
+        %             ( (exp(-ALPHA*((j-round(infusionStart(i,1)))/60)))/((kA-ALPHA)*(BETA-ALPHA)) ...
+        %             + (exp(-BETA*((j-round(infusionStart(i,1)))/60)))/((kA-BETA)*(ALPHA-BETA)) ...
+        %             + (exp(-kA*((j-round(infusionStart(i,1)))/60)))/((ALPHA-kA)*(BETA-kA)) );
+        %     end
+        % end
+        % if length(inf_dl(:,1))>1
+        %     druglevel=sum(inf_dl); % Sum Individual Infusion Drug Levels
+        % else
+        %     druglevel=inf_dl;
+        % end
+
         % Variables For the (Type 4) 2 Compartment - IP Estimated Brain Levels
         k12 = 0.233; % Pan & Justice 1991
         k21 = 0.212; % Pan & Justice 1991
-        %kel = 0.294; % Pan & Justice 1991
-        kel = 0.4; % Coffey Guess 2025
+        kel = 0.294; % Pan & Justice 1991
+        %kel = 0.185; % Pan & Justice 1991
         ALPHA = 0.5*((k12 + k21 + kel)+sqrt((k12 + k21 + kel)^2-(4*k21*kel))); %%%% Represent the redistribution of Cocaine. Calculated using Pan et al. 1991 eqn. 0.06667 with Lau and Sun 2002 values for 0.5 mg/kg dose (see paper for justification)
         BETA = 0.5*((k12 + k21 + kel)-sqrt((k12 + k21 + kel)^2-(4*k21*kel))); %%%% Represent the Elimination of Cocaine. Calculated using Pan et al. 1991 eqn. 0.0193 here with Lau and Sun 2002 values for 0.5 mg/kg dose
         VOLUME = .15; %%%% Brain Apperant Volume of distribution in L per kg
         F=.8581; % Derived from 30mg/kg estimated parameter (F*88.28uMol/kg)/(Volime Distribution Blood l/kg)-(Pan & Justice 1990)
-        %kA= .0248; % Pan & Justice 1990
-        kA= .0125; % Pan & Justice 1990
+        % kA= .0248; % Pan & Justice 1990
+        kA= .0225; % Pan & Justice 1990
         % K_FLOW = .233; %%%% Represents the flow between the two compartments
         inf_dl=zeros(length(infusionStart),SESSIONLENGTH*60);% Pre allocate array
         % Calculate Drug Level for Each Infusion seperately
         for i = 1:length(infusionStart)
             for j = round(infusionStart(i,1))+1:(SESSIONLENGTH*60)
-                inf_dl(i,j)=(F*uMDOSE*kA*k21/VOLUME)*...
+                inf_dl(i,j)=(F*(UGKGSEC*infusionDuration(i,1))*kA*k21)*...
                     ( (exp(-ALPHA*((j-round(infusionStart(i,1)))/60)))/((kA-ALPHA)*(BETA-ALPHA)) ...
                     + (exp(-BETA*((j-round(infusionStart(i,1)))/60)))/((kA-BETA)*(ALPHA-BETA)) ...
                     + (exp(-kA*((j-round(infusionStart(i,1)))/60)))/((ALPHA-kA)*(BETA-kA)) );
@@ -150,7 +182,7 @@ switch p.Results.type
         else
             druglevel=inf_dl;
         end
-        
+        % figure; plot(druglevel);
         %% %%%%%%%%%%%%%%% TYPE 5: Intraparitoneal Estimated Blood Level %%%%%%%%
         %%%%%%%%%%%%%%%%%%     Concentration in uMole/L or uM       %%%%%%%%%%%%%
     case 5
@@ -168,7 +200,7 @@ switch p.Results.type
         % Calculate Drug Level for Each Infusion seperately
         for i = 1:length(infusionStart)
             for j = round(infusionStart(i,1))+1:(SESSIONLENGTH*60)
-                inf_dl(i,j)=(F*uMDOSE*kA/VOLUME)*...
+                inf_dl(i,j)=(F*(uMDOSE*p.Results.dose_HE(i))*kA/VOLUME)*...
                     ( (((k21-ALPHA)/((kA-ALPHA)*(BETA-ALPHA)))*exp(-ALPHA*((j-round(infusionStart(i,1)))/60))) ...
                     + (((k21-BETA)/((kA-BETA)*(ALPHA-BETA)))*exp(-BETA*((j-round(infusionStart(i,1)))/60))) ...
                     + (((k21-kA)/((ALPHA-kA)*(BETA-kA)))*exp(-kA*((j-round(infusionStart(i,1)))/60))) );

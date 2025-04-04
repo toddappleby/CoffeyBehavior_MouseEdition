@@ -10,7 +10,7 @@ function BE_processes(mT, expKey, BE_intake_canonical_flnm, sub_dir, indivIntake
     end
     
     if indivIntake_figs
-        BE_CurveFit_Fig(BE_IndivFit, [sub_dir, indivIntakefigs_savepath], figsave_type);
+        BE_CurveFit_Fig(BE_IndivFit, repmat(fig_colors(1),1,height(BE_IndivFit)), [sub_dir, indivIntakefigs_savepath], figsave_type);
     end
 
     if groupIntake_figs

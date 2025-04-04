@@ -19,9 +19,13 @@ function BE_CurveFit_Fig(fit_tab, colors, figpath, figsave_type)
             % plot(log(fit_tab.modX{i}), exp(fit_tab.modY{i}), 'LineWidth', fit_lw, 'Color', colors{i});
             plot(log(fit_tab.modX{i}), fit_tab.modY{i}, 'LineWidth', fit_lw, 'Color', colors{i});
             % e = errorbar(log(fit_tab.fitX{i}), fit_tab.fitY{i}, fit_tab.semY{i}, 'k', 'LineStyle', "none");
+            try
             e = errorbar(log(fit_tab.fitX{i}), exp(fit_tab.fitY{i}), exp(fit_tab.semY{i}), 'k', 'LineStyle', "none");
             e.LineWidth = error_lw;
             e.CapSize = error_capsize;
+            catch
+                disp('Individual, No Error to Make Bars')
+            end
             p = scatter(log(fit_tab.fitX{i}), fit_tab.fitY{i}, marker_size, colors{i}, 'filled', 'MarkerEdgeColor', 'k', 'LineWidth', marker_lw);
             % p = scatter(log(fit_tab.fitX{i}), exp(fit_tab.fitY{i}), marker_size, colors{i}, 'filled', 'MarkerEdgeColor', 'k', 'LineWidth', marker_lw);
             % plot([log(fit_tab.knee_x(i)), log(fit_tab.knee_x(i))], [min(fit_tab.modY{i}) max(fit_tab.modY{i})],'--k');
