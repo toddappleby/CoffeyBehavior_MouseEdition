@@ -5,10 +5,10 @@
 main_folder = 'C:\Users\schle\Documents\GitHub\CoffeyBehavior';
 masterKey_flnm = [main_folder, '\Golden R01 Behavior Master Key.xlsx'];
 experimentKey_flnm = [main_folder, '\Experiment Key.xlsx'];
-masterTable_flnm = [main_folder, '\05-Feb-2025_masterTable.mat']; % used if createNewMasterTable == false 
+masterTable_flnm = [main_folder, '\data_masterTable.mat']; % used if createNewMasterTable == false 
 beh_datapath = {[main_folder, '\All Behavior']};
 
-createNewMasterTable = false; % if session numbers need to beupdated and correctFiles is true, a new master table will be created after updating medPC files regardless of this setting
+createNewMasterTable = true; % if session numbers need to beupdated and correctFiles is true, a new master table will be created after updating medPC files regardless of this setting
 correctFiles = true;
 runType = 'all'; % 'ER' (Extinction Reinstatement) or 'BE' (Behavioral Economics) or 'SA' (Self Administration) or 'E-BE-PR (Extinction, Beh)
 runNum = -1; % if runNum == -1, get all runs
@@ -180,9 +180,8 @@ if correctFiles
         disp(' ')
     end
    % save new table
-   today = datetime('today');
    mT = dT;
-   save([main_folder, '\', char(today), '_masterTable'], 'mT')
+   save([main_folder, '\data_masterTable'], 'mT')
    disp('saved updated masterTable with Experiment column')
    disp(' ')
 end

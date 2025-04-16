@@ -26,14 +26,16 @@ BE_intake_canonical_flnm = '.\2024.12.09.BE Intake Canonical.xlsx'; % Key for dr
 experimentKey_flnm = '.\Experiment Key.xlsx'; % Key for
 
 % MISC. SETTINGS
-runNum = 'all'; % options: 'all' or desired runs separated by underscores (e.g. '1', '1_3_4', '3_2')
-runType = 'all'; % options: 'ER' (Extinction Reinstatement), 'BE' (Behavioral Economics), 'SA' (Self Administration)
+runNum = '4'; % options: 'all' or desired runs separated by underscores (e.g. '1', '1_3_4', '3_2')
+runType = 'ER'; % options: 'ER' (Extinction Reinstatement), 'BE' (Behavioral Economics), 'SA' (Self Administration)
 createNewMasterTable = false; % true: generates & saves a new master table from medPC files in datapath. false: reads mT in from masterTable_flnm if set to false, otherwise 
 firstHour = true; % true: acquire data from the first-hour of data and analyze in addition to the full sessions
 excludeData = true; % true: excludes data based on the 'RemoveSession' column of masterSheet
 acquisition_thresh = 10; % to be labeled as "Acquire", animal must achieve an average number of infusions in the second weak of Training sessions greater than this threshold
 acquisition_testPeriod = {'Training', 'all'}; % determines sessions to average infusions across before applying acquisition_thresh. second value can be 'all', 'first', or 'last'. if 'first' or 'last', there should be a 3rd value giving the number of days to average across, or it will default to 1. 
 pAcq = true; % true: plot aquisition histogram to choose threshold 
+interpWeights = true;
+interpWeight_sessions = [1,6,11,16,21,26];
 
 run_BE_analysis = true;
 run_withinSession_analysis = true;
@@ -107,7 +109,7 @@ else
     load(masterTable_flnm)
 end
 
-%% FILTER DATA
+%% ------------- FILTER DATA --------------
 % exclude data
 if excludeData
     mT = removeExcludedData(mT, mKey);
@@ -116,7 +118,19 @@ end
 % get index for different experiments 
 dex = getExperimentIndex(mT, runNum, runType);
 
-%% Determine Acquire vs Non-acquire
+% hackymakelifebetterlater
+if any(contains(fieldnames(dex), 'ER'))
+    if isempty(dex.ER)
+        runType(runType == 'ER') = [];
+    end
+end
+if any(contains(fieldnames(dex), 'BE'))
+    if isempty(dex.BE)
+        runType(runType == 'BE') = [];
+    end
+end
+
+% Determine Acquire vs Non-acquire
 Acquire = getAcquire(mT, acquisition_thresh, acquisition_testPeriod, pAcq);
 if ~any(ismember(mT.Properties.VariableNames, 'Acquire'))
     mT=[mT table(Acquire)];
@@ -124,7 +138,12 @@ else
     mT.Acquire = Acquire;
 end
 
-%% Get data from the first hour of the session 
+% Weight Interpolation
+if interpWeights
+    mT = interpoweight(mT, interpWeight_sessions);
+end
+
+% Get data from the first hour of the session 
 if firstHour
     hmT = getFirstHour(mT);
 end
