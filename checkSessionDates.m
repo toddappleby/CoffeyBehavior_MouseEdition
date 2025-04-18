@@ -2,7 +2,8 @@
 % SS 2025
 
 %% USER SETTINGS
-main_folder = 'C:\Users\schle\Documents\GitHub\CoffeyBehavior';
+clear all
+main_folder = pwd;
 masterKey_flnm = [main_folder, '\Golden R01 Behavior Master Key.xlsx'];
 experimentKey_flnm = [main_folder, '\Experiment Key.xlsx'];
 masterTable_flnm = [main_folder, '\data_masterTable.mat']; % used if createNewMasterTable == false 
@@ -49,6 +50,7 @@ else
     runInd = ones([length(mKey.Run), 1]); 
 
 end
+
 if ~strcmp(runType, 'all')
     expInd = ones([length(runInd), 1]);
     sessTypes = exp_types(runType);
@@ -71,6 +73,9 @@ dT = setExperiment_dT(dT, mKey);
 expKey = expKey(key_ind,:);
 date = dT.Date;
 sess = dT.Session;
+run = dT.Run;
+
+%%
 if any(ismember(dT.Properties.VariableNames, 'sessionType'))
     type = dT.sessionType;
 else
@@ -82,13 +87,7 @@ type(isundefined(type)) = categorical("undefined");
 
 % annoying formatting problems pulling dates from sheet
 keyDate = expKey.Date;
-temp = cell([height(expKey), 1]);
-for kd = 1:length(keyDate)
-    d = char(keyDate{kd});
-    d = char(strrep(d, "'", ''));
-    temp{kd} = d;
-end
-expKey.Date = temp;
+
 
 %% CHECK 1:1 for date, session num, and session type
 % sessDate = checkUnique('session', sess, 'date', date);
@@ -105,15 +104,16 @@ for d = 1:length(expKey.Date)
     key_session = expKey.Session(d);
     key_type = expKey.SessionType(d);
     key_exp = expKey.Experiment(d);
-    
-    wrong_session = find((string(date) == string(key_date{1})) .* (sess ~= key_session) .* strcmp(dT.Experiment, key_exp{1}));
-    wrong_type = find((string(date) == string(key_date{1})) .* (type ~= key_type{1}) .* strcmp(dT.Experiment, key_exp{1}));
+    key_run = expKey.Run(d);
+
+    wrong_session = find(date== key_date(1) & key_run == run & sess ~= key_session & strcmp(dT.Experiment, key_exp{1}));
+    wrong_type = find(date == key_date(1) & key_run == run &type ~= key_type{1} & strcmp(dT.Experiment, key_exp{1}));
 
     incorrect_session = [incorrect_session; wrong_session];
     incorrect_type = [incorrect_type; wrong_type];
     
     if ~isempty(wrong_session)
-        disp(['Incorrect Sessions logged for ', key_date{1}, '(Session = ', num2str(key_session), ') :'])
+        disp(['Incorrect Sessions logged for ', char(key_date(1)), '(Session = ', num2str(key_session), ') :'])
         for is = 1:length(wrong_session)
             disp(['     Tag ', char(dT.TagNumber(wrong_session(is))), ' labeled as Session ', num2str(sess(wrong_session(is)))]);
         end
@@ -121,7 +121,7 @@ for d = 1:length(expKey.Date)
     end
 
     if ~isempty(wrong_type)
-        disp(['Incorrect Session Types logged for ', char(key_date{1}), '(Session Type = ', key_type{1}, ') :'])
+        disp(['Incorrect Session Types logged for ', char(key_date(1)), '(Session Type = ', key_type{1}, ') :'])
         for is = 1:length(wrong_type)
             disp(['     Tag ', char(dT.TagNumber(wrong_type(is))), ' labeled as Session Type ', char(type(wrong_type(is)))]);
         end
@@ -210,7 +210,7 @@ function correctSessions(dT, mKey, incorrect_session, sdKey)
     template = '    15:       ';
     disp('updating incorrect session numbers in medPC files...')
     for is = 1:length(incorrect_session)
-        this_date = char(dT.Date(incorrect_session(is)));
+        this_date = dT.Date(incorrect_session(is));
         this_file = dT.FileName{incorrect_session(is)};
         this_tag = dT.TagNumber(incorrect_session(is));
         mKey_ind = (mKey.TagNumber==this_tag);
@@ -218,7 +218,7 @@ function correctSessions(dT, mKey, incorrect_session, sdKey)
         this_exp = this_exp{1};
         this_run = mKey.Run(mKey_ind);
 
-        sdKey_ind = find(strcmp(sdKey.Date,char(this_date)) .* (sdKey.Run == this_run) .* strcmp(sdKey.Experiment, this_exp));
+        sdKey_ind = find((sdKey.Date==this_date) .* (sdKey.Run == this_run) .* strcmp(sdKey.Experiment, this_exp));
         corr_sess = sdKey.Session(sdKey_ind);
         char_sess = [num2str(corr_sess), '.000'];
         if corr_sess/10 < 1

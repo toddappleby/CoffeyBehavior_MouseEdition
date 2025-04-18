@@ -9,25 +9,17 @@ function [mT] = createMasterTable(main_folder, beh_datapath, masterKey_flnm, exp
     
     % Import Experiment Keyp.
     expKey = readtable(experimentKey_flnm);
-
-    % Deal with annoying formatting problems with dates from sheet
-    keyDate = expKey.Date;
-    temp = cell([height(expKey), 1]);
-    for kd = 1:length(keyDate)
-        d = char(keyDate{kd});
-        d = char(strrep(d, "'", ''));
-        temp{kd} = d;
-    end
-    expKey.Date = temp;
+    expKey.Experiment=categorical(expKey.Experiment);
+    expKey.SessionType=categorical(expKey.SessionType);
 
     %% Import & process MedPC data
     mT=table; % Initialize Master Table
     
     for bd = 1:length(beh_datapath) % SS edit to pull data from multiple folders
         Files = dir(beh_datapath{bd});
-        Files = Files(1:height(Files));
-        startIdx = 1; % Current Wave Only
-        disp(['Pulling ', num2str(length(Files)), '...']) % height(Files)-i);
+        Files=Files(~ismember({Files.name},{'.','..'}));
+        startIdx = 1; % All
+        disp(['Pulling ', num2str(length(Files)), '...'])
         wb = waitbar(0, ['Importing data... (0/', num2str(height(Files)), ')']);
         
         
@@ -45,7 +37,8 @@ function [mT] = createMasterTable(main_folder, beh_datapath, masterKey_flnm, exp
                 % Find this animal's index in mKey
                 tag = varTable.TagNumber(height(varTable));
                 mKey_ind = find(mKey.TagNumber==tag);
-                
+                run=mKey.Run(mKey_ind);
+
                 % Get experiment type from logical indexing in mKey
                 if mKey.Extinction(mKey_ind) && mKey.Reinstatement(mKey_ind) && ~mKey.BehavioralEconomics(mKey_ind)
                     Experiment = categorical("ER");
@@ -57,7 +50,7 @@ function [mT] = createMasterTable(main_folder, beh_datapath, masterKey_flnm, exp
                 
                 % Get session type, fentanyl concentration, and intake from expKey
                 fl_date = varTable.Date(height(varTable));
-                expKey_ind = find(strcmp(expKey.Date, string(fl_date)) & strcmp(expKey.Experiment,string(Experiment))); % both cases necessary for when multiple experiments are run on the same day (run 4)
+                expKey_ind = find(expKey.Date==fl_date & expKey.Experiment==Experiment & expKey.Run==run); % both cases necessary for when multiple experiments are run on the same day (run 4)
                 
                 
                 if isempty(expKey_ind) | length(expKey_ind) > 1
@@ -80,7 +73,7 @@ function [mT] = createMasterTable(main_folder, beh_datapath, masterKey_flnm, exp
                     Intake = (DoseVolume * Concentration * varTable.EarnedInfusions(height(varTable))) / (Weight/1000);
                     totalIntake = DoseVolume * Concentration * varTable.TotalInfusions(height(varTable));
                     Run = expKey.Run(expKey_ind);
-                    sessionType = categorical(string(expKey.SessionType{expKey_ind}));
+                    sessionType = expKey.SessionType(expKey_ind);
                 end
 
                 % slideSession - Slide Days for looks

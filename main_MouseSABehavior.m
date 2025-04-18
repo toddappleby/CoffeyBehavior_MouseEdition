@@ -1,10 +1,7 @@
 % Title: main_MouseSABehavior_20240429
-% Author: Kevin Coffey, Ph.D.
+% Author: Sierra Schleufer Ph.D. & Kevin Coffey, Ph.D.
 % Affiliation: University of Washington, Psychiatry
 % email address: mrcoffey@uw.edu  
-% Last revision: 22-May 2024
-% On 08/14/24 LKM edited rawVariableExtractor to show PR data
-% SS revisions: 11/5/24 - 
 
 % ------------- Description --------------
 % This is the main analysis script for Golden Oral Fentanyl SA Behavior.
@@ -26,16 +23,16 @@ BE_intake_canonical_flnm = '.\2024.12.09.BE Intake Canonical.xlsx'; % Key for dr
 experimentKey_flnm = '.\Experiment Key.xlsx'; % Key for
 
 % MISC. SETTINGS
-runNum = '4'; % options: 'all' or desired runs separated by underscores (e.g. '1', '1_3_4', '3_2')
+runNum = 'all'; % options: 'all' or desired runs separated by underscores (e.g. '1', '1_3_4', '3_2')
 runType = 'ER'; % options: 'ER' (Extinction Reinstatement), 'BE' (Behavioral Economics), 'SA' (Self Administration)
 createNewMasterTable = false; % true: generates & saves a new master table from medPC files in datapath. false: reads mT in from masterTable_flnm if set to false, otherwise 
 firstHour = true; % true: acquire data from the first-hour of data and analyze in addition to the full sessions
 excludeData = true; % true: excludes data based on the 'RemoveSession' column of masterSheet
 acquisition_thresh = 10; % to be labeled as "Acquire", animal must achieve an average number of infusions in the second weak of Training sessions greater than this threshold
-acquisition_testPeriod = {'Training', 'all'}; % determines sessions to average infusions across before applying acquisition_thresh. second value can be 'all', 'first', or 'last'. if 'first' or 'last', there should be a 3rd value giving the number of days to average across, or it will default to 1. 
+acquisition_testPeriod = {'Training', 'last', 5}; % determines sessions to average infusions across before applying acquisition_thresh. second value can be 'all', 'first', or 'last'. if 'first' or 'last', there should be a 3rd value giving the number of days to average across, or it will default to 1. 
 pAcq = true; % true: plot aquisition histogram to choose threshold 
-interpWeights = true;
-interpWeight_sessions = [1,6,11,16,21,26];
+interpWeights = false;
+interpWeight_sessions = [1,6,11,16,21];
 
 run_BE_analysis = true;
 run_withinSession_analysis = true;
