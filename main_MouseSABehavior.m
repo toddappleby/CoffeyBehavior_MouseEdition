@@ -25,7 +25,7 @@ experimentKey_flnm = '.\Experiment Key.xlsx'; % Key for
 % MISC. SETTINGS
 runNum = 'all'; % options: 'all' or desired runs separated by underscores (e.g. '1', '1_3_4', '3_2')
 runType = 'ER'; % options: 'ER' (Extinction Reinstatement), 'BE' (Behavioral Economics), 'SA' (Self Administration)
-createNewMasterTable = false; % true: generates & saves a new master table from medPC files in datapath. false: reads mT in from masterTable_flnm if set to false, otherwise 
+createNewMasterTable = true; % true: generates & saves a new master table from medPC files in datapath. false: reads mT in from masterTable_flnm if set to false, otherwise 
 firstHour = true; % true: acquire data from the first-hour of data and analyze in addition to the full sessions
 excludeData = true; % true: excludes data based on the 'RemoveSession' column of masterSheet
 acquisition_thresh = 10; % to be labeled as "Acquire", animal must achieve an average number of infusions in the second weak of Training sessions greater than this threshold
@@ -101,7 +101,7 @@ expKey = readtable(experimentKey_flnm);
 
 %% IMPORT DATA
 if createNewMasterTable
-    mT = createMasterTable(main_folder, beh_datapath, masterSheet_flnm,experimentKey_flnm);
+    mT = createMasterTable(beh_datapath, masterSheet_flnm, experimentKey_flnm, 'data_masterTable');
 else
     load(masterTable_flnm)
 end

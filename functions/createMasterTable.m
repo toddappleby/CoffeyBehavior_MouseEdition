@@ -1,8 +1,7 @@
-function [mT] = createMasterTable(main_folder, beh_datapath, masterKey_flnm, experimentKey_flnm)
+function [mT] = createMasterTable(beh_datapath, masterKey_flnm, experimentKey_flnm, savename)
     showWarnings = false;
     
     % Import Master Key
-    addpath(genpath(main_folder))
     opts = detectImportOptions(masterKey_flnm);
     opts = setvartype(opts,{'TagNumber','ID','Cage','Sex','Strain','TimeOfBehavior'},'categorical'); % Must be variables in the master key
     mKey=readtable(masterKey_flnm,opts);
@@ -114,4 +113,6 @@ function [mT] = createMasterTable(main_folder, beh_datapath, masterKey_flnm, exp
     
     %%
     save('data_masterTable','mT');
+    correctFiles = true;
+    mT = checkSessionDates(mT, mKey, expKey, correctFiles, savename);
 end
